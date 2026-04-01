@@ -166,21 +166,21 @@ const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec
 const CUSHION=2;
 
 const MD_COUNTIES={
-  'Montgomery County':      {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  "Prince George's County": {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Baltimore City':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Baltimore County':       {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Anne Arundel County':    {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Howard County':          {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Frederick County':       {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Charles County':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Harford County':         {due1:{m:8,d:1},due2:{m:11,d:1},label:'Sep 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Carroll County':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  "St. Mary's County":      {due1:{m:8,d:1},due2:{m:2,d:1}, label:'Sep 1 & Mar 1',billingMonths:6,prepaid:true},
-  'Calvert County':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Washington County':      {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Allegany County':        {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
-  'Wicomico County':        {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Montgomery County':      {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  "Prince George's County": {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Anne Arundel County':    {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Charles County':         {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Howard County':          {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Frederick County':       {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Carroll County':         {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Calvert County':         {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  "St. Mary's County":      {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Baltimore County':       {due1:{m:6,d:1}, due2:{m:11,d:1}, label:'Jul 1 & Dec 1',  period1:'Jan 1–Jun 30',period2:'Jul 1–Dec 31',billingMonths:6,prepaid:true},
+  'Baltimore City':         {due1:{m:6,d:1}, due2:{m:11,d:1}, label:'Jul 1 & Dec 1',  period1:'Jan 1–Jun 30',period2:'Jul 1–Dec 31',billingMonths:6,prepaid:true},
+  'Harford County':         {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Washington County':      {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Allegany County':        {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
+  'Wicomico County':        {due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31',period1:'Jul 1–Dec 31',period2:'Jan 1–Jun 30',billingMonths:6,prepaid:true},
 };
 
 const VA_LOCALITIES={
@@ -277,7 +277,7 @@ function calc(){
   const loc=getLocality();
   const isPrepaid=loc.prepaid,billingMonths=loc.billingMonths,TARGET=billingMonths+CUSHION;
   const countyName=state!=='DC'?el('county').value:'';
-  if(state!=='DC')el('localityInfo').textContent=`Tax due: ${loc.label} | Billing period: ${billingMonths} months | Target at disbursement: ${TARGET} months`;
+  if(state!=='DC'){const periodInfo=loc.period1?(' | Period 1: '+loc.period1+' | Period 2: '+loc.period2):'';el('localityInfo').textContent='Tax due: '+loc.label+' | Billing: '+billingMonths+' months | Target: '+TARGET+' months'+periodInfo;}
 
   const dueDates=getNextDueDates(closingDate,loc);
   const nextDue=dueDates[0],followingDue=dueDates[1];
