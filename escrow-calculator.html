@@ -121,7 +121,7 @@ input[type=range]{accent-color:#378ADD;width:100%;}
   <div class="ctrl"><label>Closing date</label><input class="inp" type="date" id="closingDate" oninput="calc()"></div>
   <div class="ctrl"><label>Annual property tax ($)</label><input class="inp" type="number" id="annTax" value="2619" oninput="calc()"><span class="ctrl-val" id="taxOut">—</span></div>
   <div class="ctrl"><label>Annual homeowners insurance ($)</label><input class="inp" type="number" id="annIns" value="1200" oninput="calc()"><span class="ctrl-val" id="insOut">—</span></div>
-  <div class="ctrl"><label>Interest rate (%)</label><input type="range" min="3" max="10" step="0.05" value="6.25" id="intRate" oninput="calc()"><span class="ctrl-val" id="intRateOut">6.25%</span></div>
+  <div class="ctrl"><label>Interest rate (%)</label><input type="range" min="3" max="10" step="0.125" value="6.25" id="intRate" oninput="calc()"><span class="ctrl-val" id="intRateOut">6.25%</span></div>
 </div>
 
 <div id="triggerBanner" style="display:none;" class="trigger-banner"></div>
@@ -284,19 +284,63 @@ function calc(){
   const sixtyDayTrigger=nextDue.days<=60;
 
   // ── MD SELLER PRORATION (always calculated for MD) ──────────────────────
-  // Seller paid taxes through end of current billing period
-  // Current billing period end = next due date + billingMonths
-  // Buyer owes seller from closing → end of current prepaid period
-  let mdProrateAlways=false, mdProreDays=0, mdProreAmount=0, mdProreEndDate=null, mdProreMonths=0;
+  // MD taxes are prepaid. Each installment covers a fixed 6-month fiscal period:
+  //   Sep 30 / Dec 31 counties: Sep 30 bill covers Jul 1–Dec 31 | Dec 31 bill covers Jan 1–Jun 30
+  //   Jul 1  / Dec 1  counties: Jul 1  bill covers Jan 1–Jun 30 | Dec 1  bill covers Jul 1–Dec 31
+  //
+  // Buyer owes seller from closing date → end of the period seller already paid for.
+  //
+  // Example: May 11 closing, Montgomery County (Sep30/Dec31)
+  //   Seller paid Dec 31 bill covering Jan 1 – Jun 30
+  //   Buyer owes May 11 → Jun 30 = 50 days ✓
+  //
+  // Example: Oct 15 closing, Montgomery County
+  //   Seller paid Sep 30 bill covering Jul 1 – Dec 31
+  //   Buyer owes Oct 15 → Dec 31 = 77 days ✓
+
+  let mdProrateAlways=false,mdProreDays=0,mdProreAmount=0,mdProreEndDate=null,mdProreMonths=0;
   if(isPrepaid){
     mdProrateAlways=true;
-    // End of seller's current prepaid period = next due date (that's when seller's last payment expires)
-    // Seller paid the most recent bill covering lastDue → nextDue
-    // Buyer owes seller for days from closing → nextDue
-    mdProreDays=nextDue.days; // days from closing to next due date
+    const cy2=closingDate.getFullYear(),cm2=closingDate.getMonth(),cd2=closingDate.getDate();
+
+    // Determine which fiscal period the closing falls in based on county billing cycle
+    // For Sep30/Dec31 counties: fiscal periods are Jul1-Dec31 and Jan1-Jun30
+    // For Jul1/Dec1 counties:  fiscal periods are Jan1-Jun30 and Jul1-Dec31
+    let paidPeriodEnd;
+    const d1m=loc.due1.m, d2m=loc.due2.m; // due month indices
+
+    if(d1m===8&&d2m===11){
+      // Sep 30 / Dec 31 county
+      // Period 1: Jul 1 – Dec 31 (seller paid Sep 30 bill)
+      // Period 2: Jan 1 – Jun 30 (seller paid Dec 31 bill)
+      if(cm2>=6&&cm2<=11){
+        // Closing is Jul–Dec → seller paid Sep30 bill covering Jul1–Dec31
+        paidPeriodEnd=new Date(cy2,11,31); // Dec 31 same year
+      } else {
+        // Closing is Jan–Jun → seller paid Dec31 bill covering Jan1–Jun30
+        paidPeriodEnd=new Date(cy2,5,30); // Jun 30 same year
+      }
+    } else if(d1m===6&&d2m===11){
+      // Jul 1 / Dec 1 county (Baltimore County/City)
+      // Period 1: Jan 1 – Jun 30 (seller paid Jul 1 bill)
+      // Period 2: Jul 1 – Dec 31 (seller paid Dec 1 bill)
+      if(cm2>=6&&cm2<=11){
+        // Closing is Jul–Dec → seller paid Dec1 bill covering Jul1–Dec31
+        paidPeriodEnd=new Date(cy2,11,31); // Dec 31 same year
+      } else {
+        // Closing is Jan–Jun → seller paid Jul1 bill covering Jan1–Jun30
+        paidPeriodEnd=new Date(cy2,5,30); // Jun 30 same year
+      }
+    } else {
+      // Generic fallback: period end = next due date - 1 day
+      const nd=getNextDueDates(closingDate,loc)[0];
+      paidPeriodEnd=new Date(new Date(nd.year,nd.month,nd.day).getTime()-864e5);
+    }
+
+    mdProreDays=Math.round((paidPeriodEnd-closingDate)/864e5);
     mdProreAmount=dailyTax*mdProreDays;
     mdProreMonths=+(mdProreDays/30.44).toFixed(2);
-    mdProreEndDate=`${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year}`;
+    mdProreEndDate=MS[paidPeriodEnd.getMonth()]+' '+paidPeriodEnd.getDate()+', '+paidPeriodEnd.getFullYear();
   }
 
   // ── 60-DAY RULE ──────────────────────────────────────────────────────────

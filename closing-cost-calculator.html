@@ -119,7 +119,7 @@ input[type=range]{accent-color:#378ADD;width:100%;}
   <div class="ctrl"><label>Purchase price ($)</label><input class="inp" type="number" id="price" value="400000" oninput="calc()"><span class="ctrl-val" id="priceOut">$400,000</span></div>
   <div class="ctrl"><label>Loan amount ($)</label><input class="inp" type="number" id="loan" value="320000" oninput="calc()"><span class="ctrl-val" id="loanOut">$320,000</span></div>
   <div class="ctrl"><label>Closing date</label><input class="inp" type="date" id="closingDate" oninput="calc()"></div>
-  <div class="ctrl"><label>Note interest rate (%)</label><input type="range" min="3" max="10" step="0.05" value="6.25" id="intRate" oninput="calc()"><span class="ctrl-val" id="intRateOut">6.25%</span></div>
+  <div class="ctrl"><label>Note interest rate (%)</label><input type="range" min="3" max="10" step="0.125" value="6.25" id="intRate" oninput="calc()"><span class="ctrl-val" id="intRateOut">6.25%</span></div>
   <div class="ctrl"><label>Loan term</label><select class="inp" id="term" onchange="calc()"><option value="30" selected>30 years</option><option value="20">20 years</option><option value="15">15 years</option><option value="10">10 years</option></select></div>
   <div class="ctrl"><label>Loan type</label><select class="inp" id="loanType" onchange="calc()"><option value="fixed">Fixed rate</option><option value="arm">Adjustable (ARM)</option></select></div>
   <div class="ctrl"><label>Annual property tax ($)</label><input class="inp" type="number" id="annTax" value="2619" oninput="calc()"><span class="ctrl-val" id="taxOut">—</span></div>
@@ -218,7 +218,7 @@ const COUNTIES={
     'Washington County':      {stateTxRate:0.005,countyTxRate:0.005,recPer500:6.90,fthbStateTx:0.0025,due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31'},
     'Allegany County':        {stateTxRate:0.005,countyTxRate:0.005,recPer500:6.90,fthbStateTx:0.0025,due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31'},
     'Wicomico County':        {stateTxRate:0.005,countyTxRate:0.005,recPer500:6.90,fthbStateTx:0.0025,due1:{m:8,d:30},due2:{m:11,d:31},label:'Sep 30 & Dec 31'},
-  }  },
+  },
   VA:{
     'Fairfax County':{grantorRate:0.001,recRate:0.0025,localRecRate:0.000833,congestion:0.0015},
     'Arlington County':{grantorRate:0.001,recRate:0.0025,localRecRate:0.000833,congestion:0.0015},
