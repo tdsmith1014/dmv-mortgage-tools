@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mortgage Calculator — DC · MD · VA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;padding:1.5rem;}
+.card{background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;padding:1.5rem;max-width:1100px;margin:0 auto;}
+h1{font-size:18px;font-weight:500;margin-bottom:3px;}
+.sub{font-size:12px;color:#888780;margin-bottom:1.25rem;}
+.tab-row{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap;}
+.tb{font-size:12px;padding:5px 13px;border-radius:8px;border:0.5px solid #b4b2a9;background:transparent;color:#888780;cursor:pointer;}
+.tb.on{background:#E6F1FB;color:#185FA5;border-color:transparent;font-weight:500;}
+.prop-toggle{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
+.ptb{font-size:13px;padding:6px 18px;border-radius:8px;border:0.5px solid #b4b2a9;background:transparent;color:#888780;cursor:pointer;font-weight:500;}
+.ptb.on{background:#fff;border:2px solid #185FA5;color:#185FA5;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.ctrl{display:flex;flex-direction:column;gap:4px;}
+.ctrl label{font-size:11px;color:#888780;}
+.ctrl-val{font-size:13px;font-weight:500;color:#1a1a18;}
+.inp{width:100%;padding:7px 9px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:8px;background:#fff;color:#1a1a18;}
+input[type=range]{accent-color:#378ADD;width:100%;}
+.mc{background:#eeede8;border-radius:8px;padding:10px 12px;}
+.mc-label{font-size:11px;color:#888780;margin-bottom:2px;}
+.mc-val{font-size:18px;font-weight:500;color:#1a1a18;}
+.mc-sub{font-size:10px;color:#b4b2a9;margin-top:2px;}
+.mc.accent{background:#E6F1FB;}.mc.accent .mc-val,.mc.accent .mc-label{color:#185FA5;}
+.mc.success{background:#EAF3DE;}.mc.success .mc-val,.mc.success .mc-label{color:#3B6D11;}
+.chart-wrap{position:relative;width:100%;height:260px;margin-bottom:1.25rem;}
+.chart-sm{position:relative;width:100%;height:200px;margin-bottom:1.25rem;}
+.legend{display:flex;gap:12px;margin-bottom:6px;font-size:11px;color:#888780;flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:4px;}
+.ldot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.sec{font-size:12px;color:#888780;margin-bottom:6px;font-weight:500;margin-top:1rem;}
+.sec:first-child{margin-top:0;}
+.note{font-size:11px;color:#888780;line-height:1.6;padding:8px 12px;background:#eeede8;border-radius:8px;margin-bottom:1rem;}
+.view{display:none;}.view.on{display:block;}
+/* Transaction summary — Melissa style */
+.ms-wrap{border:1px solid #ccc;border-radius:4px;overflow:hidden;margin-bottom:1.25rem;font-size:13px;}
+.ms-title{background:#3a3a3a;color:#fff;text-align:center;padding:9px 16px;font-weight:600;font-size:14px;letter-spacing:0.02em;}
+.ms-row{display:flex;justify-content:space-between;align-items:center;padding:6px 16px;border-bottom:1px solid #e0e0e0;}
+.ms-row:last-child{border-bottom:none;}
+.ms-label{color:#222;flex:1;}
+.ms-val{font-weight:600;color:#222;text-align:right;min-width:110px;}
+.ms-row.green-bg{background:#c8e6c9;}
+.ms-row.green-bg .ms-label,.ms-row.green-bg .ms-val{color:#1b5e20;}
+.ms-row.amber-bg{background:#fff9c4;}
+.ms-row.amber-bg .ms-label,.ms-row.amber-bg .ms-val{color:#7a5800;}
+.ms-row.red-bg{background:#ffcdd2;}
+.ms-row.red-bg .ms-label,.ms-row.red-bg .ms-val{color:#b71c1c;}
+.ms-row.total-row{background:#f0f0f0;font-weight:700;font-size:13px;}
+.ms-row.grand-row{background:#1a237e;color:#fff;font-weight:700;font-size:14px;}
+.ms-row.grand-row .ms-label,.ms-row.grand-row .ms-val{color:#fff;}
+.ms-row.credit-row{background:#e8f5e9;}
+.ms-row.credit-row .ms-label,.ms-row.credit-row .ms-val{color:#2e7d32;}
+.ms-bottom{display:grid;grid-template-columns:1fr 1fr;border-top:2px solid #ccc;margin-top:2px;}
+.ms-bottom-col{padding:12px 16px;}
+.ms-bottom-col:first-child{border-right:1px solid #ccc;}
+.ms-bottom-title{font-weight:700;font-size:13px;color:#222;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #ddd;}
+.ms-bottom-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;}
+.ms-bottom-label{color:#555;}
+.ms-bottom-val{font-weight:600;color:#222;}
+.ms-bottom-row.highlight .ms-bottom-label,.ms-bottom-row.highlight .ms-bottom-val{color:#185FA5;font-weight:700;}
+.ms-bottom-row.total-mo{border-top:1px solid #ddd;margin-top:4px;padding-top:6px;font-weight:700;}
+/* Amort table */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{font-size:11px;font-weight:500;color:#888780;text-align:right;padding:5px 7px;border-bottom:0.5px solid #d3d1c7;}
+.tbl th:first-child{text-align:left;}
+.tbl td{padding:5px 7px;text-align:right;border-bottom:0.5px solid #d3d1c7;color:#1a1a18;}
+.tbl td:first-child{text-align:left;color:#888780;}
+.tbl tr.yr td{font-weight:500;background:#f5f5f3;}
+.tbl tr.hl td{font-weight:500;background:#E6F1FB;color:#185FA5;}
+.tbl-wrap{max-height:340px;overflow-y:auto;border:0.5px solid #d3d1c7;border-radius:8px;}
+.range-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;align-items:end;}
+@media(max-width:640px){.grid3,.grid4{grid-template-columns:repeat(2,1fr);}.ms-bottom{grid-template-columns:1fr;}.grid2{grid-template-columns:1fr;}.ms-bottom-col:first-child{border-right:none;border-bottom:1px solid #ccc;}}
+</style>
+</head>
+<body><nav style="background:#fff;border-bottom:0.5px solid #d3d1c7;padding:0 1.5rem;position:sticky;top:0;z-index:100;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;"><div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px;"><a href="index.html" style="font-size:14px;font-weight:600;color:#185FA5;text-decoration:none;display:flex;align-items:center;gap:8px;"><span style="width:26px;height:26px;background:#185FA5;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M3 9.5L12 3l9 6.5V21H3V9.5z"/></svg></span>DMV Mortgage Tools</a><div style="display:flex;gap:4px;"><a href="index.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Home</a><a href="mortgage-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Mortgage</a><a href="escrow-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Escrow</a><a href="closing-cost-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Closing Costs</a></div></div></nav>
+<div class="card">
+  <h1>Mortgage Calculator</h1>
+  <p class="sub">DC · Maryland · Virginia &nbsp;|&nbsp; Transaction Summary · Amortization · Price Comparison</p>
+
+  <p class="sec">Property type</p>
+  <div class="prop-toggle">
+    <button class="ptb on" onclick="setProp('condo',this)">Condo</button>
+    <button class="ptb" onclick="setProp('coop',this)">Co-op</button>
+    <button class="ptb" onclick="setProp('sfh',this)">Single family</button>
+  </div>
+
+  <div class="tab-row">
+    <button class="tb on" onclick="sw('summary',this)">Summary</button>
+    <button class="tb" onclick="sw('transaction',this)">Transaction summary</button>
+    <button class="tb" onclick="sw('amort',this)">Amortization</button>
+    <button class="tb" onclick="sw('compare',this)">Price comparison</button>
+  </div>
+
+  <p class="sec">Loan parameters</p>
+  <div class="grid3">
+    <div class="ctrl"><label>Purchase price ($)</label><input class="inp" type="number" id="price" value="400000" oninput="calc()"><span class="ctrl-val" id="priceOut">$400,000</span></div>
+    <div class="ctrl"><label>Down payment %</label><input type="range" min="3" max="50" step="0.5" value="20" id="dpPct" oninput="calc()"><span class="ctrl-val" id="dpOut">20% — $80,000</span></div>
+    <div class="ctrl"><label>Interest rate (%)</label><input type="range" min="3.0" max="10.0" step="0.125" value="6.25" id="rate" oninput="calc()"><span class="ctrl-val" id="rateOut">6.25%</span></div>
+    <div class="ctrl"><label>Loan term</label><select class="inp" id="term" onchange="calc()"><option value="30" selected>30 years</option><option value="20">20 years</option><option value="15">15 years</option><option value="10">10 years</option></select></div>
+    <div class="ctrl"><label>Annual property tax ($)</label><input class="inp" type="number" id="tax" value="2619" oninput="calc()"><span class="ctrl-val" id="taxOut">$218/mo</span></div>
+    <div class="ctrl"><label>Annual homeowners insurance ($)</label><input class="inp" type="number" id="ins" value="400" oninput="calc()"><span class="ctrl-val" id="insOut">$33/mo</span></div>
+    <div class="ctrl"><label>HOA (monthly)</label><input class="inp" type="number" id="hoa" value="350" oninput="calc()"><span class="ctrl-val" id="hoaOut">$350/mo</span></div>
+    <div class="ctrl"><label>PMI rate (% annually, 0.01% steps)</label><input type="range" min="0.01" max="2.00" step="0.01" value="0.85" id="pmi" oninput="calc()"><span class="ctrl-val" id="pmiOut">0.85%</span></div>
+    <div class="ctrl"><label>Lender credit ($)</label><input class="inp" type="number" id="lCredit" value="0" oninput="calc()"><span class="ctrl-val" id="lCreditOut">$0</span></div>
+    <div class="ctrl"><label>Seller credit ($)</label><input class="inp" type="number" id="sCredit" value="0" oninput="calc()"><span class="ctrl-val" id="sCreditOut">$0</span></div>
+    <div class="ctrl"><label>Closing costs % of loan</label><input type="range" min="1.0" max="5.0" step="0.01" value="2.50" id="ccPct" oninput="calc()"><span class="ctrl-val" id="ccPctOut">2.50%</span></div>
+    <div class="ctrl"><label>Aggregate escrow adjustment ($)</label><input class="inp" type="number" id="escAdj" value="133.32" oninput="calc()"><span class="ctrl-val" id="escAdjOut">$133.32</span></div>
+  </div>
+
+  <p class="sec">Closing cost details</p>
+  <div class="grid3" id="ccFields"></div>
+
+  <!-- SUMMARY TAB -->
+  <div class="view on" id="view-summary">
+    <p class="sec">Monthly payment</p>
+    <div class="grid4">
+      <div class="mc accent"><div class="mc-label">Total monthly</div><div class="mc-val" id="s-total">—</div><div class="mc-sub">PITI + HOA</div></div>
+      <div class="mc"><div class="mc-label">Principal & interest</div><div class="mc-val" id="s-pi">—</div><div class="mc-sub">Mortgage only</div></div>
+      <div class="mc"><div class="mc-label">Tax & insurance</div><div class="mc-val" id="s-ti">—</div><div class="mc-sub">Escrow</div></div>
+      <div class="mc"><div class="mc-label">PMI</div><div class="mc-val" id="s-pmi">—</div><div class="mc-sub" id="s-pmisub">—</div></div>
+    </div>
+    <div class="grid4">
+      <div class="mc"><div class="mc-label">Loan amount</div><div class="mc-val" id="s-loan">—</div><div class="mc-sub">After down payment</div></div>
+      <div class="mc"><div class="mc-label">Down payment</div><div class="mc-val" id="s-dp">—</div><div class="mc-sub" id="s-dppct">—</div></div>
+      <div class="mc"><div class="mc-label">Total interest (life)</div><div class="mc-val" id="s-totint">—</div><div class="mc-sub">Full term</div></div>
+      <div class="mc success"><div class="mc-label">Cash to close</div><div class="mc-val" id="s-cashclose">—</div><div class="mc-sub" id="s-cashsub">After credits</div></div>
+    </div>
+    <p class="sec">Monthly composition</p>
+    <div class="legend">
+      <span><span class="ldot" style="background:#378ADD;"></span>P&I</span>
+      <span><span class="ldot" style="background:#1D9E75;"></span>Tax</span>
+      <span><span class="ldot" style="background:#EF9F27;"></span>Insurance</span>
+      <span><span class="ldot" style="background:#D85A30;"></span>PMI</span>
+      <span><span class="ldot" style="background:#7F77DD;"></span>HOA</span>
+    </div>
+    <div class="chart-sm"><canvas id="chartDonut"></canvas></div>
+    <p class="sec">Cumulative interest vs. principal</p>
+    <div class="legend">
+      <span><span class="ldot" style="background:#378ADD;"></span>Interest paid</span>
+      <span><span class="ldot" style="background:#1D9E75;"></span>Principal paid</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chartArea"></canvas></div>
+    <div class="note" id="s-note"></div>
+  </div>
+
+  <!-- TRANSACTION SUMMARY TAB — Melissa style -->
+  <div class="view" id="view-transaction">
+    <p class="sec">Transaction summary</p>
+    <div class="ms-wrap" id="msWrap"></div>
+    <div class="note">This is NOT a loan estimate. Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before choosing a loan. DC transfer taxes, title fees, and escrow reserves calculated using Federal Title rate schedule and lender requirements.</div>
+  </div>
+
+  <!-- AMORTIZATION TAB -->
+  <div class="view" id="view-amort">
+    <p class="sec">Balance vs. equity</p>
+    <div class="legend">
+      <span><span class="ldot" style="background:#378ADD;"></span>Remaining balance</span>
+      <span><span class="ldot" style="background:#1D9E75;"></span>Equity built</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chartBal"></canvas></div>
+    <p class="sec">Year-by-year amortization</p>
+    <div class="tbl-wrap"><table class="tbl" id="amortTbl"></table></div>
+  </div>
+
+  <!-- PRICE COMPARISON TAB -->
+  <div class="view" id="view-compare">
+    <p class="sec">Price range settings</p>
+    <div class="range-row">
+      <div class="ctrl"><label>Range start ($)</label><input class="inp" type="number" id="rangeStart" value="300000" oninput="calc()"><span class="ctrl-val" id="rangeStartOut">$300,000</span></div>
+      <div class="ctrl"><label>Range end ($)</label><input class="inp" type="number" id="rangeEnd" value="800000" oninput="calc()"><span class="ctrl-val" id="rangeEndOut">$800,000</span></div>
+      <div class="ctrl"><label>Step size</label><select class="inp" id="rangeStep" onchange="calc()"><option value="25000">$25,000</option><option value="50000" selected>$50,000</option><option value="100000">$100,000</option></select></div>
+    </div>
+    <p class="sec">Monthly payment by price</p>
+    <div class="legend">
+      <span><span class="ldot" style="background:#378ADD;"></span>P&I</span>
+      <span><span class="ldot" style="background:#1D9E75;"></span>Tax & insurance</span>
+      <span><span class="ldot" style="background:#EF9F27;"></span>PMI</span>
+      <span><span class="ldot" style="background:#7F77DD;"></span>HOA</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chartCompare"></canvas></div>
+    <p class="sec">Comparison table</p>
+    <div class="tbl-wrap"><table class="tbl" id="compareTbl"></table></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let cDonut,cArea,cBal,cCompare;
+let propType='condo';
+const el=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.round(n).toLocaleString();
+const fmtD=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtPct=n=>parseFloat(n).toFixed(3)+'%';
+const gv=id=>parseFloat(el(id).value)||0;
+
+function pmt(r,n,pv){if(r===0)return pv/n;return pv*(r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);}
+function pmiDrop(loan,mo,n,pi,price){let b=loan,m=0;while(b>price*0.8&&m<n){b-=(pi-b*mo);m++;}return m;}
+
+function dcTransferTax(p){return p*(p<=400000?0.011:0.0145);}
+function lenderTitle(loan){if(loan<=200000)return 875;if(loan<=300000)return 1178;if(loan<=400000)return 1678;if(loan<=500000)return 1978;return 2278;}
+
+const CC_DEFAULTS={
+  condo:{lenderFees:2174.15,appraisal:650,realtorBrokerage:495,hoaQuestionnaire:295,hoaCapitalContrib:700,titleFees:1450,ownerTitleOptional:1100,insReserves3mo:true,taxReserves5mo:true},
+  coop:{lenderFees:2174.15,appraisal:650,realtorBrokerage:495,coopMoveIn:250,coopQuestionnaire:295,coopCapitalContrib:1458,coopRecognition:425,coopPropDoc:485.50,titleFees:1650,insReserves3mo:false,taxReserves5mo:false},
+  sfh:{lenderFees:2174.15,appraisal:650,realtorBrokerage:495,titleFees:1450,ownerTitleOptional:1100,insReserves3mo:true,taxReserves5mo:true}
+};
+
+function buildCCFields(){
+  const d=CC_DEFAULTS[propType];
+  const fields={lenderFees:['Lender fees ($)',d.lenderFees],appraisal:['Appraisal fee ($)',d.appraisal],realtorBrokerage:['Realtor brokerage fee ($)',d.realtorBrokerage]};
+  if(propType==='condo'||propType==='sfh'){fields.hoaQuestionnaire=['HOA questionnaire fee ($)',d.hoaQuestionnaire||0];fields.hoaCapitalContrib=['HOA capital contribution ($)',d.hoaCapitalContrib||0];}
+  if(propType==='coop'){fields.coopMoveIn=['Coop move-in fee ($)',d.coopMoveIn];fields.coopQuestionnaire=['Coop questionnaire fee ($)',d.coopQuestionnaire];fields.coopCapitalContrib=['Coop capital contribution ($)',d.coopCapitalContrib];fields.coopRecognition=['Coop recognition agreement ($)',d.coopRecognition];fields.coopPropDoc=['Coop proprietary doc fee ($)',d.coopPropDoc];}
+  fields.titleFees=['Title fees ($)',d.titleFees];
+  el('ccFields').innerHTML=Object.entries(fields).map(([id,[label,val]])=>`<div class="ctrl"><label>${label}</label><input class="inp" type="number" id="cc_${id}" value="${val}" oninput="calc()"></div>`).join('');
+}
+
+function buildTransactionSummary(price,loan,dp,dpPct,rate,term,pi,taxMo,insMo,pmiMo,hoaMo,lc,sc,escAdj,insAnn,taxAnn){
+  const d=CC_DEFAULTS[propType];
+  const lf=gv('cc_lenderFees');
+  const ap=gv('cc_appraisal');
+  const rb=gv('cc_realtorBrokerage');
+  const tf=gv('cc_titleFees');
+  const lenderTitleFee=lenderTitle(loan);
+  const ownerTitleFee=propType==='coop'?0:1100;
+  const recFee=185;
+  const transTax=dcTransferTax(price);
+  const prepaidInt=loan*(rate/100)/365;
+  const insEscrow=d.insReserves3mo?(insAnn/12)*3:0;
+  const taxEscrow=d.taxReserves5mo?(taxAnn/12)*5:0;
+
+  // Build line items with color classes
+  const lines=[];
+  lines.push({l:'Sales price',v:price,cls:''});
+  lines.push({l:'Lender fees',v:lf,cls:''});
+  lines.push({l:'Appraisal fees',v:ap,cls:''});
+  lines.push({l:'PrePaid interest (1 day)',v:prepaidInt,cls:'green-bg'});
+  lines.push({l:'1 year insurance',v:insAnn,cls:'green-bg'});
+  lines.push({l:`Insurance escrow reserves (${d.insReserves3mo?3:0} months)`,v:insEscrow,cls:'green-bg'});
+  lines.push({l:`Tax escrow reserves (${d.taxReserves5mo?5:0} months)`,v:taxEscrow,cls:'green-bg'});
+  lines.push({l:'Realtor brokerage fee',v:rb,cls:'amber-bg'});
+
+  if(propType==='condo'||propType==='sfh'){
+    lines.push({l:'HOA questionnaire fee',v:gv('cc_hoaQuestionnaire')||0,cls:'amber-bg'});
+    lines.push({l:'HOA capital contribution (2 months)',v:gv('cc_hoaCapitalContrib')||0,cls:'amber-bg'});
+  }
+  if(propType==='coop'){
+    lines.push({l:'Coop – move in fee',v:gv('cc_coopMoveIn'),cls:'amber-bg'});
+    lines.push({l:'Coop – questionnaire fee',v:gv('cc_coopQuestionnaire'),cls:'amber-bg'});
+    lines.push({l:'Coop – capital contribution (2 months)',v:gv('cc_coopCapitalContrib'),cls:'amber-bg'});
+    lines.push({l:'Coop – recognition agreement',v:gv('cc_coopRecognition'),cls:'amber-bg'});
+    lines.push({l:'Coop – proprietary doc pre fee',v:gv('cc_coopPropDoc'),cls:'amber-bg'});
+  }
+  lines.push({l:'Title fees',v:tf,cls:''});
+  if(propType!=='coop')lines.push({l:"Owner's title insurance (optional)",v:ownerTitleFee,cls:'',optional:true});
+  if(propType!=='coop')lines.push({l:"Lender's title insurance",v:lenderTitleFee,cls:''});
+  lines.push({l:'Recording fees',v:recFee,cls:'red-bg'});
+  lines.push({l:'Transfer taxes',v:transTax,cls:'red-bg'});
+
+  const totalCosts=lines.filter(l=>!l.optional).reduce((a,l)=>a+l.v,0);
+  const totalCredits=loan+lc+sc+escAdj;
+  const dueAtClosing=totalCosts-totalCredits;
+  const apr=rate+0.109;
+
+  let html=`<div class="ms-title">Transaction Summary for TBD ${propType.charAt(0).toUpperCase()+propType.slice(1)}</div>`;
+  lines.forEach(item=>{
+    const optTag=item.optional?' <span style="font-size:10px;color:#888;">(optional)</span>':'';
+    html+=`<div class="ms-row ${item.cls||''}"><span class="ms-label">${item.l}${optTag}</span><span class="ms-val">${item.v>0?fmtD(item.v):'—'}</span></div>`;
+  });
+  html+=`<div class="ms-row total-row"><span class="ms-label">Total costs</span><span class="ms-val">${fmtD(totalCosts)}</span></div>`;
+  html+=`<div class="ms-row" style="background:#f9f9f9;"><span class="ms-label" style="font-weight:600;">Total loan amount</span><span class="ms-val">${fmtD(loan)}</span></div>`;
+  html+=`<div class="ms-row credit-row"><span class="ms-label">Seller credit</span><span class="ms-val">${sc>0?fmtD(sc):'—'}</span></div>`;
+  html+=`<div class="ms-row credit-row"><span class="ms-label">Lender credit</span><span class="ms-val">${lc>0?fmtD(lc):'—'}</span></div>`;
+  html+=`<div class="ms-row"><span class="ms-label">Cash deposit on sales contract</span><span class="ms-val">—</span></div>`;
+  html+=`<div class="ms-row credit-row"><span class="ms-label">Aggregate escrow adjustment</span><span class="ms-val">${fmtD(escAdj)}</span></div>`;
+  html+=`<div class="ms-row total-row"><span class="ms-label">Total credits</span><span class="ms-val">${fmtD(totalCredits)}</span></div>`;
+  html+=`<div class="ms-row grand-row"><span class="ms-label">Total estimated due at closing</span><span class="ms-val">${fmtD(Math.max(0,dueAtClosing))}</span></div>`;
+
+  // Bottom two-column section
+  html+=`<div class="ms-bottom">
+    <div class="ms-bottom-col">
+      <div class="ms-bottom-title">Your loan program — ${term} yr. fixed</div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Purchase price</span><span class="ms-bottom-val">${fmt(price)}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Down payment</span><span class="ms-bottom-val">${fmt(dp)}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Total loan amount</span><span class="ms-bottom-val">${fmt(loan)}</span></div>
+      <div class="ms-bottom-row highlight"><span class="ms-bottom-label">Interest rate</span><span class="ms-bottom-val">${fmtPct(rate)}</span></div>
+      <div class="ms-bottom-row highlight"><span class="ms-bottom-label">APR (est.)</span><span class="ms-bottom-val">${fmtPct(apr)}</span></div>
+    </div>
+    <div class="ms-bottom-col">
+      <div class="ms-bottom-title">Your monthly housing cost breakdown</div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Principal &amp; interest</span><span class="ms-bottom-val">${fmtD(pi)}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Insurance</span><span class="ms-bottom-val">${fmtD(insMo)}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Taxes</span><span class="ms-bottom-val">${taxMo>0?fmtD(taxMo):'—'}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">PMI</span><span class="ms-bottom-val">${pmiMo>0?fmtD(pmiMo):'—'}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">HOA</span><span class="ms-bottom-val">${hoaMo>0?fmtD(hoaMo):'—'}</span></div>
+      <div class="ms-bottom-row total-mo"><span class="ms-bottom-label">Total</span><span class="ms-bottom-val" style="color:#185FA5;">${fmtD(pi+insMo+taxMo+pmiMo+hoaMo)}</span></div>
+    </div>
+  </div>`;
+
+  el('msWrap').innerHTML=html;
+}
+
+function calc(){
+  const price=gv('price')||400000;
+  const dpPct=gv('dpPct')||20;
+  const rate=gv('rate')||6.25;
+  const term=parseInt(el('term').value)||30;
+  const taxAnn=gv('tax')||2619;
+  const insAnn=gv('ins')||400;
+  const hoaMo=gv('hoa')||0;
+  const pmiRate=gv('pmi')||0.85;
+  const lc=gv('lCredit');
+  const sc=gv('sCredit');
+  const escAdj=gv('escAdj')||133.32;
+
+  const dp=price*dpPct/100;
+  const loan=price-dp;
+  const mo=rate/100/12;
+  const n=term*12;
+  const pi=pmt(mo,n,loan);
+  const taxMo=taxAnn/12;
+  const insMo=insAnn/12;
+  const pmiMo=dpPct<20?loan*pmiRate/100/12:0;
+  const total=pi+taxMo+insMo+pmiMo+hoaMo;
+  const totInt=pi*n-loan;
+
+  const lf=gv('cc_lenderFees')||2174;
+  const ap=gv('cc_appraisal')||650;
+  const tf=gv('cc_titleFees')||1450;
+  const rb=gv('cc_realtorBrokerage')||495;
+  const lt=lenderTitle(loan);
+  const prepaidInt=loan*(rate/100)/365;
+  const insEscrow=CC_DEFAULTS[propType].insReserves3mo?(insAnn/12)*3:0;
+  const taxEscrow=CC_DEFAULTS[propType].taxReserves5mo?(taxAnn/12)*5:0;
+  const transTax=dcTransferTax(price);
+  const totalCC=lf+ap+tf+rb+lt+185+transTax+prepaidInt+insAnn+insEscrow+taxEscrow;
+  const totalCredits=loan+lc+sc+escAdj;
+  const cashClose=price-loan+totalCC-totalCredits;
+
+  el('priceOut').textContent=fmt(price);
+  el('dpOut').textContent=fmtPct(dpPct)+' — '+fmt(dp);
+  el('rateOut').textContent=fmtPct(rate);
+  el('taxOut').textContent=fmtD(taxMo)+'/mo';
+  el('insOut').textContent=fmtD(insMo)+'/mo';
+  el('hoaOut').textContent=fmtD(hoaMo)+'/mo';
+  el('pmiOut').textContent=fmtPct(pmiRate)+(dpPct>=20?' (N/A)':'');
+  el('lCreditOut').textContent=fmt(lc);
+  el('sCreditOut').textContent=fmt(sc);
+  el('ccPctOut').textContent=fmtPct(gv('ccPct'));
+  el('escAdjOut').textContent=fmtD(escAdj);
+  el('s-total').textContent=fmtD(total);
+  el('s-pi').textContent=fmtD(pi);
+  el('s-ti').textContent=fmtD(taxMo+insMo);
+  el('s-pmi').textContent=pmiMo>0?fmtD(pmiMo):'$0.00';
+  el('s-pmisub').textContent=dpPct>=20?'Not required':'Drops ~mo '+pmiDrop(loan,mo,n,pi,price);
+  el('s-loan').textContent=fmt(loan);
+  el('s-dp').textContent=fmt(dp);
+  el('s-dppct').textContent=fmtPct(dpPct)+' of price';
+  el('s-totint').textContent=fmt(totInt);
+  el('s-cashclose').textContent=fmt(Math.max(0,cashClose));
+  el('s-cashsub').textContent=(lc+sc)>0?'After '+fmt(lc+sc)+' credits':'Down pmt + closing costs';
+  el('s-note').textContent=`${propType.charAt(0).toUpperCase()+propType.slice(1)} at ${fmt(price)}, ${fmtPct(dpPct)} down, ${fmtPct(rate)} — total monthly ${fmtD(total)}, estimated cash to close ${fmt(Math.max(0,cashClose))}.${pmiMo>0?' PMI drops ~month '+pmiDrop(loan,mo,n,pi,price)+'.':''}`;
+
+  updateDonut(pi,taxMo,insMo,pmiMo,hoaMo);
+  updateArea(loan,mo,n,pi);
+  updateBalance(loan,mo,n,pi,term);
+  buildTransactionSummary(price,loan,dp,dpPct,rate,term,pi,taxMo,insMo,pmiMo,hoaMo,lc,sc,escAdj,insAnn,taxAnn);
+  updateAmort(loan,mo,n,pi,term);
+  updateCompare(price,dpPct,rate,term,taxAnn,insAnn,hoaMo,pmiRate);
+}
+
+function updateDonut(pi,tax,ins,pmi,hoa){
+  const raw=[pi,tax,ins,pmi,hoa],labels=['P&I','Tax','Insurance','PMI','HOA'],colors=['#378ADD','#1D9E75','#EF9F27','#D85A30','#7F77DD'];
+  const data=[],lbl=[],clr=[];
+  raw.forEach((v,i)=>{if(v>0.01){data.push(Math.round(v));lbl.push(labels[i]);clr.push(colors[i]);}});
+  if(cDonut){cDonut.data.labels=lbl;cDonut.data.datasets[0].data=data;cDonut.data.datasets[0].backgroundColor=clr;cDonut.update();return;}
+  cDonut=new Chart(el('chartDonut'),{type:'doughnut',data:{labels:lbl,datasets:[{data,backgroundColor:clr,borderWidth:2,borderColor:'rgba(200,200,200,0.3)'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.label+': $'+ctx.parsed.toLocaleString()}}}}});
+}
+
+function updateArea(loan,mo,n,pi){
+  const labels=[],iD=[],pD=[];let ci=0,cp=0,bal=loan;
+  const step=Math.max(1,Math.floor(n/60));
+  for(let m=1;m<=n;m++){const i=bal*mo,p=pi-i;ci+=i;cp+=p;bal-=p;if(m%step===0||m===n){labels.push('Mo '+m);iD.push(Math.round(ci));pD.push(Math.round(cp));}}
+  if(cArea){cArea.data.labels=labels;cArea.data.datasets[0].data=iD;cArea.data.datasets[1].data=pD;cArea.update();return;}
+  cArea=new Chart(el('chartArea'),{type:'line',data:{labels,datasets:[{label:'Interest',data:iD,borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',fill:true,tension:0.3,pointRadius:0},{label:'Principal',data:pD,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',fill:true,tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:10,font:{size:10}},grid:{display:false}},y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'K',font:{size:10}},grid:{color:'rgba(128,128,128,0.12)'}}}}});
+}
+
+function updateBalance(loan,mo,n,pi,term){
+  const labels=[],bD=[],eD=[];
+  for(let yr=0;yr<=term;yr++){let b=loan;for(let m=0;m<yr*12;m++){b-=(pi-b*mo);}b=Math.max(0,b);labels.push('Yr '+yr);bD.push(Math.round(b));eD.push(Math.round(loan-b));}
+  if(cBal){cBal.data.labels=labels;cBal.data.datasets[0].data=bD;cBal.data.datasets[1].data=eD;cBal.update();return;}
+  cBal=new Chart(el('chartBal'),{type:'line',data:{labels,datasets:[{label:'Balance',data:bD,borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',fill:true,tension:0.3,pointRadius:0},{label:'Equity',data:eD,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.08)',fill:true,tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:10,font:{size:10}},grid:{display:false}},y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'K',font:{size:10}},grid:{color:'rgba(128,128,128,0.12)'}}}}});
+}
+
+function updateAmort(loan,mo,n,pi,term){
+  let b=loan,ci=0,rows='<thead><tr><th style="text-align:left">Year</th><th>Principal</th><th>Interest</th><th>Total paid</th><th>Cum. interest</th><th>Balance</th></tr></thead><tbody>';
+  const mData=[];
+  for(let m=1;m<=n;m++){const i=b*mo,p=pi-i;b=Math.max(0,b-p);ci+=i;mData.push({i,p,b,ci});}
+  for(let yr=1;yr<=term;yr++){
+    const sl=mData.slice((yr-1)*12,yr*12),yP=sl.reduce((a,r)=>a+r.p,0),yI=sl.reduce((a,r)=>a+r.i,0),last=sl[sl.length-1];
+    rows+=`<tr class="yr"><td>Year ${yr}</td><td>${fmt(yP)}</td><td>${fmt(yI)}</td><td>${fmt(yP+yI)}</td><td>${fmt(last.ci)}</td><td>${fmt(last.b)}</td></tr>`;
+  }
+  el('amortTbl').innerHTML=rows+'</tbody>';
+}
+
+function updateCompare(basePrice,dpPct,rate,term,taxAnn,insAnn,hoaMo,pmiRate){
+  const start=Math.max(50000,gv('rangeStart')||300000);
+  const end=Math.min(5000000,gv('rangeEnd')||800000);
+  const step=parseInt(el('rangeStep').value)||50000;
+  el('rangeStartOut').textContent=fmt(start);el('rangeEndOut').textContent=fmt(end);
+  const prices=[];for(let p=start;p<=end;p+=step)prices.push(p);if(prices.length>40)prices.splice(40);
+  const mo=rate/100/12,n=term*12,piA=[],tiA=[],pmiA=[],hoaA=[],totA=[];
+  prices.forEach(p=>{
+    const loan=p-p*dpPct/100,pi=pmt(mo,n,loan),tm=taxAnn/12,im=insAnn/12,pm=dpPct<20?loan*pmiRate/100/12:0;
+    piA.push(Math.round(pi));tiA.push(Math.round(tm+im));pmiA.push(Math.round(pm));hoaA.push(Math.round(hoaMo));totA.push(Math.round(pi+tm+im+pm+hoaMo));
+  });
+  const labels=prices.map(p=>'$'+Math.round(p/1000)+'K');
+  if(cCompare){cCompare.data.labels=labels;cCompare.data.datasets[0].data=piA;cCompare.data.datasets[1].data=tiA;cCompare.data.datasets[2].data=pmiA;cCompare.data.datasets[3].data=hoaA;cCompare.update();}
+  else{cCompare=new Chart(el('chartCompare'),{type:'bar',data:{labels,datasets:[{label:'P&I',data:piA,backgroundColor:'#378ADD',borderRadius:3},{label:'Tax+Ins',data:tiA,backgroundColor:'#1D9E75',borderRadius:3},{label:'PMI',data:pmiA,backgroundColor:'#EF9F27',borderRadius:3},{label:'HOA',data:hoaA,backgroundColor:'#7F77DD',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{autoSkip:true,maxTicksLimit:15,font:{size:10},maxRotation:45},grid:{display:false}},y:{stacked:true,ticks:{callback:v=>'$'+Math.round(v).toLocaleString(),font:{size:10}},grid:{color:'rgba(128,128,128,0.12)'}}}}});}
+  let t='<thead><tr><th style="text-align:left">Price</th><th>Down</th><th>Loan</th><th>P&I</th><th>Tax+Ins</th><th>PMI</th><th>HOA</th><th>Total/mo</th></tr></thead><tbody>';
+  prices.forEach((p,i)=>{
+    const hl=Math.abs(p-basePrice)<step/2?'hl':'';
+    t+=`<tr class="${hl}"><td>${fmt(p)}</td><td>${fmt(p*dpPct/100)}</td><td>${fmt(p-p*dpPct/100)}</td><td>${fmt(piA[i])}</td><td>${fmt(tiA[i])}</td><td>${pmiA[i]>0?fmt(pmiA[i]):'-'}</td><td>${hoaA[i]>0?fmt(hoaA[i]):'-'}</td><td>${fmt(totA[i])}</td></tr>`;
+  });
+  el('compareTbl').innerHTML=t+'</tbody>';
+}
+
+function setProp(type,btn){
+  propType=type;
+  document.querySelectorAll('.ptb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(type==='sfh'){el('hoa').value=0;el('tax').value=6000;}
+  if(type==='condo'){el('hoa').value=350;el('tax').value=2619;}
+  if(type==='coop'){el('hoa').value=729;el('tax').value=0;}
+  buildCCFields();calc();
+}
+
+function sw(v,btn){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(e=>e.classList.remove('on'));
+  el('view-'+v).classList.add('on');btn.classList.add('on');
+  setTimeout(()=>{[cDonut,cArea,cBal,cCompare].forEach(c=>{if(c)c.resize();});},60);
+}
+
+buildCCFields();calc();
+</script>
+
+<div style="background:#fff;border-top:0.5px solid #d3d1c7;padding:10px 1.5rem;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">
+  <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:11px;color:#888780;">Tim Smith &nbsp;&middot;&nbsp; NMLS #195275 &nbsp;&middot;&nbsp; Company NMLS #1701910</span>
+    <span style="font-size:11px;color:#888780;">This is NOT a loan estimate. For estimation purposes only. All tools run in your browser — no data collected.</span>
+  </div>
+</div>
+
+<div style="background:#f5f5f3;border-top:0.5px solid #d3d1c7;padding:14px 1.5rem;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <p style="font-size:10px;color:#888780;line-height:1.7;"><strong style="color:#5F5E5A;">DISCLAIMER:</strong> The Gramm-Leach-Bliley Act requires lenders and other parties in the lending process to safeguard consumers' personal, non-public information. The information in this correspondence, including any attachments, is confidential, privileged, &amp; proprietary, intended only for the use of recipient to whom it is addressed. Any unauthorized review, use, dissemination, copying of this message is strictly prohibited. If you are not the intended addressee in this message, or an agent responsible for delivery of the message to such person, you are hereby notified that you have received this communication in error. Please destroy all copies of the original message from your computer system. Certain views and opinions expressed in this email, and any attachments, may be personal to the sender and not necessarily reflective of the views of Loansteady LLC.</p>
+  </div>
+</div>
+</body>
+</html>
