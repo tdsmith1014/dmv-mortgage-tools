@@ -299,26 +299,67 @@ function calc(){
     mdProreEndDate=`${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year}`;
   }
 
-  // ── 60-DAY RULE — additional semi-annual bill (MD only adds the next bill too) ──
-  let targetDue;
-  let sixtyDayBillAmount=0,sixtyDayBillMonths=0;
-
+  // ── 60-DAY RULE ──────────────────────────────────────────────────────────
+  let targetDue1st,sixtyDayBillAmount=0,sixtyDayBillMonths=0;
   if(sixtyDayTrigger){
-    // DC/VA: prorated days to next due collected in prepaids
-    // MD: already collecting proration above; additionally collect the upcoming semi-annual bill
-    sixtyDayBillAmount = isPrepaid ? moTax*billingMonths : dailyTax*nextDue.days;
-    sixtyDayBillMonths = isPrepaid ? billingMonths : +(nextDue.days/30.44).toFixed(2);
-    targetDue=followingDue;
+    sixtyDayBillAmount=isPrepaid?moTax*billingMonths:dailyTax*nextDue.days;
+    sixtyDayBillMonths=isPrepaid?billingMonths:+(nextDue.days/30.44).toFixed(2);
+    targetDue1st=followingDue;
   } else {
-    targetDue=nextDue;
+    targetDue1st=nextDue;
   }
 
   // ── ESCROW END-IN-MIND ───────────────────────────────────────────────────
-  const targetDate=new Date(targetDue.year,targetDue.month,targetDue.day);
-  const mortgagePayments=countMortgagePayments(firstPayDate,targetDate);
-  const mortgageMonths=getMortgageMonths(firstPayDate,targetDate);
-  const taxEscrowMonths=Math.max(0,TARGET-mortgagePayments);
-  const taxEscrowAtClosing=moTax*taxEscrowMonths;
+  // MD TWO-INSTALLMENT FORMULA:
+  //   After paying the 1st bill, the remaining cushion must be large enough
+  //   to reach TARGET at the 2nd bill using only mortgage payments in between.
+  //
+  //   gapPayments = mortgage payments between 1st and 2nd due dates
+  //   cushionAfter1st = TARGET - gapPayments  (must be >= CUSHION)
+  //   target1stMonths = billingMonths + cushionAfter1st
+  //   taxEscrowMonths = target1stMonths - mortgage payments before 1st due date
+  //
+  //   Example: May 11 closing, Montgomery County (Sep 30 / Dec 31)
+  //   gapPayments (Oct,Nov,Dec) = 3
+  //   cushionAfter1st = 8 - 3 = 5
+  //   target1stMonths = 6 + 5 = 11
+  //   prePayments (Jul,Aug,Sep) = 3
+  //   taxEscrowMonths = 11 - 3 = 8 months at closing ✓
+  //
+  // DC/VA STANDARD: taxEscrowMonths = TARGET - prePayments
+
+  let taxEscrowMonths,taxEscrowAtClosing,mortgagePayments,mortgageMonths;
+  let cushionAfter1st=CUSHION,target1stMonths=TARGET,gapPayments=0,gapMonthsList=[];
+  let secondDueAfterTarget=null;
+  const targetDue=targetDue1st;
+
+  if(isPrepaid){
+    const target1stDate=new Date(targetDue1st.year,targetDue1st.month,targetDue1st.day);
+    // Find the next due date after target1st
+    const allDues=getNextDueDates(closingDate,loc);
+    secondDueAfterTarget=allDues.find(d=>d.days>targetDue1st.days);
+    if(secondDueAfterTarget){
+      const secondDate=new Date(secondDueAfterTarget.year,secondDueAfterTarget.month,secondDueAfterTarget.day);
+      // Mortgage payments collected between 1st and 2nd due dates
+      const dayAfter1st=new Date(target1stDate.getFullYear(),target1stDate.getMonth()+1,1);
+      gapPayments=countMortgagePayments(dayAfter1st,secondDate);
+      gapMonthsList=getMortgageMonths(dayAfter1st,secondDate);
+    }
+    // Cushion needed after paying 1st bill to reach TARGET at 2nd bill
+    cushionAfter1st=Math.max(CUSHION,TARGET-gapPayments);
+    target1stMonths=billingMonths+cushionAfter1st;
+    // Mortgage payments from first payment date up to and including 1st target month
+    mortgagePayments=countMortgagePayments(firstPayDate,target1stDate);
+    mortgageMonths=getMortgageMonths(firstPayDate,target1stDate);
+    taxEscrowMonths=Math.max(0,target1stMonths-mortgagePayments);
+    taxEscrowAtClosing=moTax*taxEscrowMonths;
+  } else {
+    const targetDate=new Date(targetDue1st.year,targetDue1st.month,targetDue1st.day);
+    mortgagePayments=countMortgagePayments(firstPayDate,targetDate);
+    mortgageMonths=getMortgageMonths(firstPayDate,targetDate);
+    taxEscrowMonths=Math.max(0,TARGET-mortgagePayments);
+    taxEscrowAtClosing=moTax*taxEscrowMonths;
+  }
 
   // ── TOTAL ─────────────────────────────────────────────────────────────────
   const totalEscrow=taxEscrowAtClosing+insEscrow+prepaidInt+prepaidIns
@@ -450,19 +491,32 @@ function calc(){
 
   // ── WORK-BACKWARDS PANEL ─────────────────────────────────────────────────
   let wb=`<div class="ts-header">Work-backwards — ${MS[targetDue.month]} ${targetDue.day}, ${targetDue.year}</div>`;
-  wb+=`<div class="ts-row sh"><span>Step 1 — target balance at disbursement</span></div>`;
-  wb+=`<div class="ts-row"><span class="ts-label">${billingMonths}-month tax bill (${fmtD(moTax)}/mo × ${billingMonths})</span><span class="ts-val">${fmtD(moTax*billingMonths)}</span></div>`;
-  wb+=`<div class="ts-row"><span class="ts-label">Required cushion (${CUSHION} months × ${fmtD(moTax)})</span><span class="ts-val">${fmtD(moTax*CUSHION)}</span></div>`;
-  wb+=`<div class="ts-row tot"><span class="ts-label">Target at ${MS[targetDue.month]} disbursement</span><span class="ts-val blue">${TARGET} months = ${fmtD(moTax*TARGET)}</span></div>`;
-  wb+=`<div class="ts-row sh"><span>Step 2 — monthly collections via mortgage (${MS[firstPayMonth]} → ${MS[targetDue.month]})</span></div>`;
-  mortgageMonths.forEach(mo=>{wb+=`<div class="ts-row escrow-row"><span class="ts-label">${mo}<span class="pill escrow">+1 month</span></span><span class="ts-val">${fmtD(moTax)}</span></div>`;});
-  wb+=`<div class="ts-row tot"><span class="ts-label">Total via mortgage payments</span><span class="ts-val blue">${mortgagePayments} months = ${fmtD(moTax*mortgagePayments)}</span></div>`;
-  wb+=`<div class="ts-row sh"><span>Step 3 — closing collection needed</span></div>`;
-  wb+=`<div class="ts-row grand"><span class="ts-label" style="font-weight:500;">${TARGET} − ${mortgagePayments} = <strong>${taxEscrowMonths} months at closing</strong></span><span class="ts-val blue" style="font-size:14px;">${fmtD(taxEscrowAtClosing)}</span></div>`;
   if(isPrepaid){
-    wb+=`<div class="ts-row sh"><span>MD seller proration — always shown (closing → ${mdProreEndDate})</span></div>`;
-    wb+=`<div class="ts-row prorate-row"><span class="ts-label">Days: ${mdProreDays} days | Months: ${mdProreMonths.toFixed(2)}</span><span class="ts-val">&nbsp;</span></div>`;
-    wb+=`<div class="ts-row prorate-row"><span class="ts-label">Calculation: ${mdProreDays} days × ${fmtD(dailyTax)}/day</span><span class="ts-val green">${fmtD(mdProreAmount)}</span></div>`;
+    wb+=`<div class="ts-row sh"><span>Step 1 — cushion needed after 1st installment to fund 2nd installment</span></div>`;
+    wb+=`<div class="ts-row"><span class="ts-label">2nd due date after target</span><span class="ts-val">${secondDueAfterTarget?MS[secondDueAfterTarget.month]+' '+secondDueAfterTarget.day+', '+secondDueAfterTarget.year:'—'}</span></div>`;
+    wb+=`<div class="ts-row"><span class="ts-label">Mortgage payments between 1st and 2nd due dates</span><span class="ts-val">${gapPayments} months<span class="mo-badge">${gapMonthsList.join(', ')}</span></span></div>`;
+    wb+=`<div class="ts-row"><span class="ts-label">Cushion needed after 1st bill (${TARGET} target − ${gapPayments} gap pmts)</span><span class="ts-val">${cushionAfter1st} months</span></div>`;
+    wb+=`<div class="ts-row tot"><span class="ts-label">Target at ${MS[targetDue.month]} ${targetDue.day} (${billingMonths} bill + ${cushionAfter1st} cushion)</span><span class="ts-val blue">${target1stMonths} months = ${fmtD(moTax*target1stMonths)}</span></div>`;
+    wb+=`<div class="ts-row sh"><span>Step 2 — mortgage payments before ${MS[targetDue.month]} ${targetDue.day} (${MS[firstPayMonth]} → ${MS[targetDue.month]})</span></div>`;
+    mortgageMonths.forEach(mo=>{wb+=`<div class="ts-row escrow-row"><span class="ts-label">${mo}<span class="pill escrow">+1 month</span></span><span class="ts-val">${fmtD(moTax)}</span></div>`;});
+    wb+=`<div class="ts-row tot"><span class="ts-label">Total via mortgage payments</span><span class="ts-val blue">${mortgagePayments} months = ${fmtD(moTax*mortgagePayments)}</span></div>`;
+    wb+=`<div class="ts-row sh"><span>Step 3 — closing collection needed</span></div>`;
+    wb+=`<div class="ts-row grand"><span class="ts-label" style="font-weight:500;">${target1stMonths} target − ${mortgagePayments} via mortgage = <strong>${taxEscrowMonths} months at closing</strong></span><span class="ts-val blue" style="font-size:14px;">${fmtD(taxEscrowAtClosing)}</span></div>`;
+    wb+=`<div class="ts-row sh"><span>Verification — full escrow cycle</span></div>`;
+    wb+=`<div class="ts-row prorate-row"><span class="ts-label">${taxEscrowMonths} (closing) + ${mortgagePayments} (mortgage) = ${target1stMonths} → pay ${billingMonths}-mo bill → ${cushionAfter1st} remain</span><span class="ts-val green">✓ ${cushionAfter1st} month cushion</span></div>`;
+    if(secondDueAfterTarget){wb+=`<div class="ts-row prorate-row"><span class="ts-label">${cushionAfter1st} + ${gapPayments} (${gapMonthsList.join(',')}) = ${cushionAfter1st+gapPayments} → pay ${billingMonths}-mo bill → ${cushionAfter1st+gapPayments-billingMonths} remain</span><span class="ts-val green">✓ ${CUSHION} month cushion</span></div>`;}
+    wb+=`<div class="ts-row sh"><span>MD seller proration — closing (${MS[cm]} ${cd}) → ${mdProreEndDate}</span></div>`;
+    wb+=`<div class="ts-row prorate-row"><span class="ts-label">${mdProreDays} days × ${fmtD(dailyTax)}/day</span><span class="ts-val green">${fmtD(mdProreAmount)}</span></div>`;
+  } else {
+    wb+=`<div class="ts-row sh"><span>Step 1 — target balance at disbursement</span></div>`;
+    wb+=`<div class="ts-row"><span class="ts-label">${billingMonths}-month tax bill (${fmtD(moTax)}/mo × ${billingMonths})</span><span class="ts-val">${fmtD(moTax*billingMonths)}</span></div>`;
+    wb+=`<div class="ts-row"><span class="ts-label">Required cushion (${CUSHION} months × ${fmtD(moTax)})</span><span class="ts-val">${fmtD(moTax*CUSHION)}</span></div>`;
+    wb+=`<div class="ts-row tot"><span class="ts-label">Target at ${MS[targetDue.month]} disbursement</span><span class="ts-val blue">${TARGET} months = ${fmtD(moTax*TARGET)}</span></div>`;
+    wb+=`<div class="ts-row sh"><span>Step 2 — monthly collections via mortgage (${MS[firstPayMonth]} → ${MS[targetDue.month]})</span></div>`;
+    mortgageMonths.forEach(mo=>{wb+=`<div class="ts-row escrow-row"><span class="ts-label">${mo}<span class="pill escrow">+1 month</span></span><span class="ts-val">${fmtD(moTax)}</span></div>`;});
+    wb+=`<div class="ts-row tot"><span class="ts-label">Total via mortgage payments</span><span class="ts-val blue">${mortgagePayments} months = ${fmtD(moTax*mortgagePayments)}</span></div>`;
+    wb+=`<div class="ts-row sh"><span>Step 3 — closing collection needed</span></div>`;
+    wb+=`<div class="ts-row grand"><span class="ts-label" style="font-weight:500;">${TARGET} − ${mortgagePayments} = <strong>${taxEscrowMonths} months at closing</strong></span><span class="ts-val blue" style="font-size:14px;">${fmtD(taxEscrowAtClosing)}</span></div>`;
   }
   if(sixtyDayTrigger){
     wb+=`<div class="ts-row sh"><span>60-day rule — ${isPrepaid?billingMonths+'-month bill':'prorated days'} (additional prepaid)</span></div>`;
