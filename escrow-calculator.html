@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Escrow Calculator — DC · MD · VA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;padding:1.5rem;}
+.card{background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;padding:1.5rem;max-width:1100px;margin:0 auto;}
+h1{font-size:18px;font-weight:500;margin-bottom:3px;}
+.sub{font-size:12px;color:#888780;margin-bottom:1.25rem;}
+.state-toggle{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;}
+.stb{font-size:13px;padding:7px 22px;border-radius:8px;border:0.5px solid #b4b2a9;background:transparent;color:#888780;cursor:pointer;font-weight:500;}
+.stb.on{background:#E6F1FB;border:2px solid #185FA5;color:#185FA5;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.25rem;}
+.ctrl{display:flex;flex-direction:column;gap:5px;}
+.ctrl label{font-size:11px;color:#888780;}
+.ctrl-val{font-size:13px;font-weight:500;color:#1a1a18;}
+.inp{width:100%;padding:7px 9px;font-size:13px;border:0.5px solid #b4b2a9;border-radius:8px;background:#fff;color:#1a1a18;}
+input[type=range]{accent-color:#378ADD;width:100%;}
+.mc{background:#eeede8;border-radius:8px;padding:11px 13px;}
+.mc-label{font-size:11px;color:#888780;margin-bottom:2px;}
+.mc-val{font-size:16px;font-weight:500;color:#1a1a18;}
+.mc-sub{font-size:10px;color:#b4b2a9;margin-top:2px;}
+.mc.accent{background:#E6F1FB;}.mc.accent .mc-val,.mc.accent .mc-label{color:#185FA5;}
+.mc.success{background:#EAF3DE;}.mc.success .mc-val,.mc.success .mc-label{color:#3B6D11;}
+.mc.warn{background:#FAEEDA;}.mc.warn .mc-val,.mc.warn .mc-label{color:#633806;}
+.sec{font-size:12px;color:#888780;margin-bottom:7px;font-weight:500;margin-top:1.1rem;}
+.sec:first-child{margin-top:0;}
+.note{font-size:11px;color:#888780;line-height:1.6;padding:9px 13px;background:#eeede8;border-radius:8px;margin-top:.75rem;}
+.locality-info{font-size:11px;color:#888780;margin-top:4px;padding:4px 8px;background:#eeede8;border-radius:8px;}
+.trigger-banner{background:#fff9c4;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:12px;color:#7a5800;font-weight:500;border-left:3px solid #BA7517;}
+.ms-wrap{border:1px solid #ccc;border-radius:4px;overflow:hidden;font-size:13px;margin-bottom:1.5rem;}
+.ms-title{background:#2d2d2d;color:#fff;text-align:center;padding:9px 16px;font-weight:600;font-size:14px;}
+.ms-section{background:#e0e0e0;padding:5px 16px;font-size:11px;font-weight:700;color:#444;letter-spacing:0.04em;text-transform:uppercase;}
+.ms-row{display:flex;justify-content:space-between;align-items:center;padding:6px 16px;border-bottom:0.5px solid #e0e0e0;}
+.ms-row:last-child{border-bottom:none;}
+.ms-label{color:#333;flex:1;font-size:12px;padding-right:8px;}
+.ms-val{font-weight:600;color:#1a1a18;text-align:right;min-width:110px;font-size:12px;}
+.ms-row.green-bg{background:#c8e6c9;}.ms-row.green-bg .ms-label,.ms-row.green-bg .ms-val{color:#1b5e20;}
+.ms-row.amber-bg{background:#fff9c4;}.ms-row.amber-bg .ms-label,.ms-row.amber-bg .ms-val{color:#7a5800;}
+.ms-row.red-bg{background:#ffcdd2;}.ms-row.red-bg .ms-label,.ms-row.red-bg .ms-val{color:#b71c1c;}
+.ms-row.blue-bg{background:#E6F1FB;}.ms-row.blue-bg .ms-label,.ms-row.blue-bg .ms-val{color:#0C447C;}
+.ms-row.total-row{background:#f0f0f0;}.ms-row.total-row .ms-label,.ms-row.total-row .ms-val{font-weight:700;font-size:13px;}
+.ms-row.grand-row{background:#1a237e;}.ms-row.grand-row .ms-label,.ms-row.grand-row .ms-val{color:#fff;font-size:13px;font-weight:700;}
+.ms-bottom{display:grid;grid-template-columns:1fr 1fr;border-top:1.5px solid #ccc;}
+.ms-bottom-col{padding:12px 16px;}
+.ms-bottom-col:first-child{border-right:0.5px solid #ddd;}
+.ms-bottom-title{font-weight:700;font-size:12px;color:#1a1a18;margin-bottom:8px;padding-bottom:4px;border-bottom:0.5px solid #ddd;}
+.ms-bottom-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;}
+.ms-bottom-label{color:#666;}
+.ms-bottom-val{font-weight:600;color:#1a1a18;}
+.ms-bottom-row.hl{border-top:0.5px solid #ddd;margin-top:4px;padding-top:6px;}
+.ms-bottom-row.hl .ms-bottom-label,.ms-bottom-row.hl .ms-bottom-val{font-weight:700;color:#185FA5;}
+.ms-bottom-row.triggered .ms-bottom-label,.ms-bottom-row.triggered .ms-bottom-val{color:#7a5800;}
+.ts-wrap{background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;overflow:hidden;margin-bottom:.75rem;}
+.ts-header{background:#eeede8;padding:9px 15px;font-size:12px;font-weight:500;color:#1a1a18;border-bottom:0.5px solid #d3d1c7;}
+.ts-row{display:flex;justify-content:space-between;align-items:center;padding:7px 15px;border-bottom:0.5px solid #d3d1c7;font-size:12px;}
+.ts-row:last-child{border-bottom:none;}
+.ts-row.sh{background:#f5f5f3;font-size:10px;font-weight:500;color:#888780;padding:4px 15px;letter-spacing:0.03em;}
+.ts-row.tot{font-weight:500;background:#f5f5f3;}
+.ts-row.grand{font-weight:500;font-size:13px;border-top:1.5px solid #b4b2a9;}
+.ts-row.escrow-row{background:rgba(55,138,221,0.05);}
+.ts-row.trigger-row{background:rgba(239,159,39,0.12);}
+.ts-row.prorate-row{background:rgba(29,158,117,0.07);}
+.ts-row.amber-row{background:rgba(239,159,39,0.08);}
+.ts-label{color:#888780;}
+.ts-val{font-weight:500;color:#1a1a18;}
+.ts-val.blue{color:#185FA5;}
+.ts-val.green{color:#0F6E56;}
+.ts-val.amber{color:#854F0B;}
+.ts-val.muted{color:#b4b2a9;}
+.pill{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:500;margin-left:5px;}
+.pill.escrow{background:#E6F1FB;color:#0C447C;}
+.pill.trigger{background:#FAEEDA;color:#633806;}
+.pill.prepaid{background:#EAF3DE;color:#27500A;}
+.pill.prorate{background:rgba(29,158,117,0.2);color:#085041;}
+.tl{display:flex;flex-direction:column;margin-bottom:1.25rem;}
+.tl-row{display:flex;align-items:stretch;}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:26px;flex-shrink:0;}
+.tl-circle{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.tl-line{width:2px;flex:1;background:#d3d1c7;margin:2px 0;}
+.tl-body{padding:1px 0 14px 10px;flex:1;}
+.tl-title{font-size:12px;font-weight:500;color:#1a1a18;}
+.tl-sub{font-size:11px;color:#888780;margin-top:1px;}
+.mo-badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;background:#E6F1FB;color:#185FA5;margin-left:5px;font-weight:500;}
+.chart-wrap{position:relative;width:100%;height:220px;margin-top:.5rem;}
+.legend{display:flex;gap:12px;margin-bottom:6px;font-size:11px;color:#888780;flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:4px;}
+.ldot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+@media(max-width:640px){.grid3,.grid4{grid-template-columns:repeat(2,1fr);}.grid2{grid-template-columns:1fr;}.ms-bottom{grid-template-columns:1fr;}.ms-bottom-col:first-child{border-right:none;border-bottom:0.5px solid #ddd;}}
+</style>
+</head>
+<body><nav style="background:#fff;border-bottom:0.5px solid #d3d1c7;padding:0 1.5rem;position:sticky;top:0;z-index:100;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;"><div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px;"><a href="index.html" style="font-size:14px;font-weight:600;color:#185FA5;text-decoration:none;display:flex;align-items:center;gap:8px;"><span style="width:26px;height:26px;background:#185FA5;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M3 9.5L12 3l9 6.5V21H3V9.5z"/></svg></span>DMV Mortgage Tools</a><div style="display:flex;gap:4px;"><a href="index.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Home</a><a href="mortgage-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Mortgage</a><a href="escrow-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Escrow</a><a href="closing-cost-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Closing Costs</a><a href="swap-analysis.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Swap Analysis</a></div></div></nav>
+<div class="card">
+<h1>Escrow Calculator</h1>
+<p class="sub">DC · Maryland · Virginia &nbsp;|&nbsp; End-in-mind formula · 60-day rule · County tax calendars</p>
+
+<p class="sec">Jurisdiction</p>
+<div class="state-toggle">
+  <button class="stb on" onclick="setState('DC',this)">Washington, DC</button>
+  <button class="stb" onclick="setState('MD',this)">Maryland</button>
+  <button class="stb" onclick="setState('VA',this)">Virginia</button>
+</div>
+
+<div class="grid3">
+  <div class="ctrl" id="countyWrap" style="display:none;">
+    <label id="countyLbl">County</label>
+    <select class="inp" id="county" onchange="calc()"></select>
+    <div class="locality-info" id="localityInfo"></div>
+  </div>
+</div>
+
+<p class="sec">Transaction details</p>
+<div class="grid3">
+  <div class="ctrl"><label>Purchase price ($)</label><input class="inp" type="number" id="price" value="400000" oninput="calc()"><span class="ctrl-val" id="priceOut">$400,000</span></div>
+  <div class="ctrl"><label>Loan amount ($)</label><input class="inp" type="number" id="loan" value="320000" oninput="calc()"><span class="ctrl-val" id="loanOut">$320,000</span></div>
+  <div class="ctrl"><label>Closing date</label><input class="inp" type="date" id="closingDate" oninput="calc()"></div>
+  <div class="ctrl"><label>Annual property tax ($)</label><input class="inp" type="number" id="annTax" value="2619" oninput="calc()"><span class="ctrl-val" id="taxOut">—</span></div>
+  <div class="ctrl"><label>Annual homeowners insurance ($)</label><input class="inp" type="number" id="annIns" value="1200" oninput="calc()"><span class="ctrl-val" id="insOut">—</span></div>
+  <div class="ctrl"><label>Interest rate (%)</label><input type="range" min="3" max="10" step="0.05" value="6.25" id="intRate" oninput="calc()"><span class="ctrl-val" id="intRateOut">6.25%</span></div>
+</div>
+
+<div id="triggerBanner" style="display:none;" class="trigger-banner"></div>
+
+<p class="sec">Escrow summary</p>
+<div class="grid4" id="summaryCards"></div>
+
+<p class="sec">Transaction summary — settlement statement</p>
+<div class="ms-wrap" id="msWrap"></div>
+
+<p class="sec">Settlement timeline</p>
+<div class="tl" id="timeline"></div>
+
+<div class="grid2">
+  <div><p class="sec">Escrow & prepaid detail</p><div class="ts-wrap" id="escrowDetail"></div></div>
+  <div><p class="sec">Work-backwards calculation</p><div class="ts-wrap" id="workBackDetail"></div></div>
+</div>
+
+<p class="sec">Escrow composition</p>
+<div class="legend">
+  <span><span class="ldot" style="background:#378ADD;"></span>Tax escrow at closing</span>
+  <span><span class="ldot" style="background:#1D9E75;"></span>Insurance escrow</span>
+  <span><span class="ldot" style="background:#EF9F27;"></span>Prepaid interest</span>
+  <span><span class="ldot" style="background:#7F77DD;"></span>Insurance prepaid (1yr)</span>
+  <span><span class="ldot" style="background:#9EE0B4;"></span>MD seller proration (always)</span>
+  <span><span class="ldot" style="background:#D85A30;"></span>Tax prepaid (60-day — if triggered)</span>
+</div>
+<div class="chart-wrap"><canvas id="escrowChart"></canvas></div>
+<div class="note" id="noteBox"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let state='DC',escChart;
+const el=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.round(n).toLocaleString();
+const fmtD=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtPct=n=>parseFloat(n).toFixed(2)+'%';
+const gv=id=>parseFloat(el(id).value)||0;
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CUSHION=2;
+
+const MD_COUNTIES={
+  'Montgomery County':      {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  "Prince George's County": {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Baltimore City':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Baltimore County':       {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Anne Arundel County':    {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Howard County':          {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Frederick County':       {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Charles County':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Harford County':         {due1:{m:8,d:1},due2:{m:11,d:1},label:'Sep 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Carroll County':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  "St. Mary's County":      {due1:{m:8,d:1},due2:{m:2,d:1}, label:'Sep 1 & Mar 1',billingMonths:6,prepaid:true},
+  'Calvert County':         {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Washington County':      {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Allegany County':        {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+  'Wicomico County':        {due1:{m:6,d:1},due2:{m:11,d:1},label:'Jul 1 & Dec 1',billingMonths:6,prepaid:true},
+};
+
+const VA_LOCALITIES={
+  'Fairfax County':        {due1:{m:5,d:5}, due2:{m:11,d:5}, label:'Jun 5 & Dec 5',  billingMonths:6,prepaid:false},
+  'Arlington County':      {due1:{m:5,d:15},due2:{m:10,d:15},label:'Jun 15 & Nov 15',billingMonths:5,prepaid:false},
+  'Alexandria City':       {due1:{m:5,d:15},due2:{m:10,d:15},label:'Jun 15 & Nov 15',billingMonths:5,prepaid:false},
+  'Loudoun County':        {due1:{m:5,d:5}, due2:{m:11,d:5}, label:'Jun 5 & Dec 5',  billingMonths:6,prepaid:false},
+  'Prince William County': {due1:{m:6,d:15},due2:{m:11,d:5}, label:'Jul 15 & Dec 5', billingMonths:6,prepaid:false},
+  'Stafford County':       {due1:{m:5,d:5}, due2:{m:11,d:5}, label:'Jun 5 & Dec 5',  billingMonths:6,prepaid:false},
+  'Manassas City':         {due1:{m:5,d:15},due2:{m:11,d:5}, label:'Jun 15 & Dec 5', billingMonths:6,prepaid:false},
+  'Manassas Park City':    {due1:{m:5,d:15},due2:{m:11,d:5}, label:'Jun 15 & Dec 5', billingMonths:6,prepaid:false},
+  'Falls Church City':     {due1:{m:5,d:6}, due2:{m:11,d:6}, label:'Jun 6 & Dec 6',  billingMonths:6,prepaid:false},
+  'Fauquier County':       {due1:{m:5,d:5}, due2:{m:11,d:5}, label:'Jun 5 & Dec 5',  billingMonths:6,prepaid:false},
+};
+
+const DC_META={due1:{m:2,d:31},due2:{m:8,d:15},label:'Mar 31 & Sep 15',billingMonths:6,prepaid:false};
+
+(function(){
+  const t=new Date(),pad=n=>String(n).padStart(2,'0');
+  el('closingDate').value=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;
+  el('county').innerHTML=Object.keys(MD_COUNTIES).map(c=>`<option value="${c}">${c}</option>`).join('');
+})();
+
+function setState(s,btn){
+  state=s;document.querySelectorAll('.stb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  el('countyWrap').style.display=s==='DC'?'none':'block';
+  el('countyLbl').textContent=s==='VA'?'Locality':'County';
+  if(s==='MD')el('county').innerHTML=Object.keys(MD_COUNTIES).map(c=>`<option value="${c}">${c}</option>`).join('');
+  else if(s==='VA')el('county').innerHTML=Object.keys(VA_LOCALITIES).map(c=>`<option value="${c}">${c}</option>`).join('');
+  calc();
+}
+
+function getLocality(){
+  if(state==='DC')return DC_META;
+  return state==='MD'?MD_COUNTIES[el('county').value]:VA_LOCALITIES[el('county').value];
+}
+
+function getNextDueDates(closingDate,loc){
+  const cy=closingDate.getFullYear();
+  const candidates=[];
+  [loc.due1,loc.due2].forEach(due=>{
+    for(let yo=0;yo<=2;yo++){
+      const d=new Date(cy+yo,due.m,due.d);
+      const days=Math.round((d-closingDate)/864e5);
+      if(days>0){candidates.push({date:d,month:due.m,day:due.d,days,year:cy+yo});break;}
+    }
+  });
+  candidates.sort((a,b)=>a.days-b.days);
+  [loc.due1,loc.due2].forEach(due=>{
+    for(let yo=0;yo<=3;yo++){
+      const d=new Date(cy+yo,due.m,due.d);
+      const days=Math.round((d-closingDate)/864e5);
+      if(days>0&&!candidates.find(c=>Math.abs(c.days-days)<2)){candidates.push({date:d,month:due.m,day:due.d,days,year:cy+yo});break;}
+    }
+  });
+  candidates.sort((a,b)=>a.days-b.days);
+  return candidates;
+}
+
+// Get the most recent past due date (last payment the seller made)
+function getLastDueDate(closingDate,loc){
+  const cy=closingDate.getFullYear();
+  const candidates=[];
+  [loc.due1,loc.due2].forEach(due=>{
+    for(let yo=1;yo>=-1;yo--){
+      const d=new Date(cy-yo,due.m,due.d);
+      const days=Math.round((closingDate-d)/864e5);
+      if(days>=0){candidates.push({date:d,month:due.m,day:due.d,days,year:cy-yo});break;}
+    }
+  });
+  candidates.sort((a,b)=>a.days-b.days);
+  return candidates[0]; // most recent past due date
+}
+
+function countMortgagePayments(fpd,td){let c=0,d=new Date(fpd);while(d<=td){c++;d=new Date(d.getFullYear(),d.getMonth()+1,1);}return c;}
+function getMortgageMonths(fpd,td){const m=[];let d=new Date(fpd);while(d<=td){m.push(MS[d.getMonth()]+' '+d.getFullYear());d=new Date(d.getFullYear(),d.getMonth()+1,1);}return m;}
+
+function calc(){
+  const price=gv('price')||400000,loan=gv('loan')||320000;
+  const annTax=gv('annTax')||2619,annIns=gv('annIns')||1200,intRate=gv('intRate')||6.25;
+  const rawDate=el('closingDate').value;if(!rawDate)return;
+  const closingDate=new Date(rawDate+'T12:00:00');
+  const cm=closingDate.getMonth(),cd=closingDate.getDate(),cy=closingDate.getFullYear();
+  const daysInMonth=new Date(cy,cm+1,0).getDate(),prepaidDays=daysInMonth-cd;
+  const firstPayMonth=(cm+2)%12,firstPayYear=cy+Math.floor((cm+2)/12);
+  const firstPayDate=new Date(firstPayYear,firstPayMonth,1);
+  const moTax=annTax/12,moIns=annIns/12,dailyTax=annTax/365,dailyInt=loan*(intRate/100)/365;
+  const prepaidInt=dailyInt*prepaidDays,prepaidIns=annIns,insEscrow=moIns*CUSHION;
+
+  el('priceOut').textContent=fmt(price);el('loanOut').textContent=fmt(loan);
+  el('taxOut').textContent=fmtD(moTax)+'/mo';el('insOut').textContent=fmtD(moIns)+'/mo';
+  el('intRateOut').textContent=fmtPct(intRate);
+
+  const loc=getLocality();
+  const isPrepaid=loc.prepaid,billingMonths=loc.billingMonths,TARGET=billingMonths+CUSHION;
+  const countyName=state!=='DC'?el('county').value:'';
+  if(state!=='DC')el('localityInfo').textContent=`Tax due: ${loc.label} | Billing period: ${billingMonths} months | Target at disbursement: ${TARGET} months`;
+
+  const dueDates=getNextDueDates(closingDate,loc);
+  const nextDue=dueDates[0],followingDue=dueDates[1];
+  const sixtyDayTrigger=nextDue.days<=60;
+
+  // ── MD SELLER PRORATION (always calculated for MD) ──────────────────────
+  // Seller paid taxes through end of current billing period
+  // Current billing period end = next due date + billingMonths
+  // Buyer owes seller from closing → end of current prepaid period
+  let mdProrateAlways=false, mdProreDays=0, mdProreAmount=0, mdProreEndDate=null, mdProreMonths=0;
+  if(isPrepaid){
+    mdProrateAlways=true;
+    // End of seller's current prepaid period = next due date (that's when seller's last payment expires)
+    // Seller paid the most recent bill covering lastDue → nextDue
+    // Buyer owes seller for days from closing → nextDue
+    mdProreDays=nextDue.days; // days from closing to next due date
+    mdProreAmount=dailyTax*mdProreDays;
+    mdProreMonths=+(mdProreDays/30.44).toFixed(2);
+    mdProreEndDate=`${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year}`;
+  }
+
+  // ── 60-DAY RULE — additional semi-annual bill (MD only adds the next bill too) ──
+  let targetDue;
+  let sixtyDayBillAmount=0,sixtyDayBillMonths=0;
+
+  if(sixtyDayTrigger){
+    // DC/VA: prorated days to next due collected in prepaids
+    // MD: already collecting proration above; additionally collect the upcoming semi-annual bill
+    sixtyDayBillAmount = isPrepaid ? moTax*billingMonths : dailyTax*nextDue.days;
+    sixtyDayBillMonths = isPrepaid ? billingMonths : +(nextDue.days/30.44).toFixed(2);
+    targetDue=followingDue;
+  } else {
+    targetDue=nextDue;
+  }
+
+  // ── ESCROW END-IN-MIND ───────────────────────────────────────────────────
+  const targetDate=new Date(targetDue.year,targetDue.month,targetDue.day);
+  const mortgagePayments=countMortgagePayments(firstPayDate,targetDate);
+  const mortgageMonths=getMortgageMonths(firstPayDate,targetDate);
+  const taxEscrowMonths=Math.max(0,TARGET-mortgagePayments);
+  const taxEscrowAtClosing=moTax*taxEscrowMonths;
+
+  // ── TOTAL ─────────────────────────────────────────────────────────────────
+  const totalEscrow=taxEscrowAtClosing+insEscrow+prepaidInt+prepaidIns
+    +(mdProrateAlways?mdProreAmount:0)
+    +(sixtyDayTrigger?sixtyDayBillAmount:0);
+
+  // Trigger banner
+  el('triggerBanner').style.display=sixtyDayTrigger?'block':'none';
+  if(sixtyDayTrigger){
+    el('triggerBanner').textContent=`60-day rule triggered — ${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year} is ${nextDue.days} days from closing. ${isPrepaid?`MD: additional ${billingMonths}-month semi-annual bill (${fmtD(sixtyDayBillAmount)}) added to Prepaids.`:`Prorated tax (${nextDue.days} days = ${fmtD(sixtyDayBillAmount)}) collected in Prepaids.`} Escrow resets targeting ${MS[targetDue.month]} ${targetDue.day}, ${targetDue.year}.`;
+  }
+
+  // ── SUMMARY CARDS ─────────────────────────────────────────────────────────
+  el('summaryCards').innerHTML=`
+    <div class="mc accent"><div class="mc-label">Total escrow & prepaids</div><div class="mc-val">${fmt(totalEscrow)}</div><div class="mc-sub">Due at settlement</div></div>
+    <div class="mc"><div class="mc-label">Tax escrow at closing</div><div class="mc-val">${fmt(taxEscrowAtClosing)}</div><div class="mc-sub">${taxEscrowMonths} months (end-in-mind)</div></div>
+    <div class="mc ${isPrepaid?'success':''}"><div class="mc-label">${isPrepaid?'MD seller proration (always)':'60-day rule status'}</div><div class="mc-val">${isPrepaid?fmt(mdProreAmount):sixtyDayTrigger?fmt(sixtyDayBillAmount):'Not triggered'}</div><div class="mc-sub">${isPrepaid?mdProreDays+' days to '+MS[nextDue.month]+' '+nextDue.day:(sixtyDayTrigger?'Next due: '+MS[nextDue.month]+' '+nextDue.day+' ('+nextDue.days+' days)':'Next due: '+MS[nextDue.month]+' '+nextDue.day+' ('+nextDue.days+' days)')}</div></div>
+    <div class="mc ${sixtyDayTrigger?'warn':''}"><div class="mc-label">${sixtyDayTrigger?'60-day rule triggered':'First mortgage payment'}</div><div class="mc-val">${sixtyDayTrigger?fmt(sixtyDayBillAmount):MS[firstPayMonth]+' 1, '+firstPayYear}</div><div class="mc-sub">${sixtyDayTrigger?(isPrepaid?billingMonths+'-mo bill added':'Prorated '+nextDue.days+' days'):mortgagePayments+' pmts before '+MS[targetDue.month]+' target'}</div></div>`;
+
+  // ── MELISSA-STYLE TRANSACTION SUMMARY ─────────────────────────────────────
+  let ms=`<div class="ms-title">Escrow & Prepaid Settlement Summary — ${state}${countyName?' / '+countyName:''}</div>`;
+
+  // Section 1: Standard prepaids (always)
+  ms+=`<div class="ms-section">Prepaids — always collected at closing</div>`;
+  ms+=`<div class="ms-row green-bg"><span class="ms-label">PrePaid interest (${prepaidDays} days @ ${fmtD(dailyInt)}/day)</span><span class="ms-val">${fmtD(prepaidInt)}</span></div>`;
+  ms+=`<div class="ms-row green-bg"><span class="ms-label">1 year homeowners insurance</span><span class="ms-val">${fmtD(prepaidIns)}</span></div>`;
+
+  // Section 2: MD seller proration — ALWAYS shown for MD
+  if(isPrepaid){
+    ms+=`<div class="ms-section">Maryland seller proration — buyer pays seller at closing (always required)</div>`;
+    ms+=`<div class="ms-row green-bg"><span class="ms-label">Seller proration — buyer owes seller for ${mdProreDays} days (${mdProreMonths.toFixed(2)} months) from closing (${MS[cm]} ${cd}) through seller's prepaid period end (${mdProreEndDate}) @ ${fmtD(dailyTax)}/day</span><span class="ms-val">${fmtD(mdProreAmount)}</span></div>`;
+  }
+
+  // Section 3: 60-day rule prepaid taxes — ONLY if triggered
+  if(sixtyDayTrigger){
+    ms+=`<div class="ms-section">Prepaid taxes — 60-day rule triggered (${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year} is only ${nextDue.days} days away)</div>`;
+    if(isPrepaid){
+      ms+=`<div class="ms-row amber-bg"><span class="ms-label">${billingMonths}-month semi-annual tax bill due ${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year} — collected upfront, escrow resets to ${MS[targetDue.month]} ${targetDue.year}</span><span class="ms-val">${fmtD(sixtyDayBillAmount)}</span></div>`;
+    } else {
+      ms+=`<div class="ms-row amber-bg"><span class="ms-label">Prorated tax — ${nextDue.days} days (${(nextDue.days/30.44).toFixed(2)} months) to ${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year} @ ${fmtD(dailyTax)}/day — escrow resets to ${MS[targetDue.month]} ${targetDue.year}</span><span class="ms-val">${fmtD(sixtyDayBillAmount)}</span></div>`;
+    }
+  }
+
+  // Section 4: Escrow reserves (always)
+  ms+=`<div class="ms-section">Escrow reserves — collected at closing</div>`;
+  ms+=`<div class="ms-row blue-bg"><span class="ms-label">Insurance escrow reserves (${CUSHION} months @ ${fmtD(moIns)}/mo)</span><span class="ms-val">${fmtD(insEscrow)}</span></div>`;
+  ms+=`<div class="ms-row blue-bg"><span class="ms-label">Tax escrow reserves — ${taxEscrowMonths} months @ ${fmtD(moTax)}/mo (targeting ${MS[targetDue.month]} ${targetDue.day}, ${targetDue.year})</span><span class="ms-val">${fmtD(taxEscrowAtClosing)}</span></div>`;
+  ms+=`<div class="ms-row blue-bg"><span class="ms-label">PMI escrow at closing</span><span class="ms-val">—</span></div>`;
+  ms+=`<div class="ms-row total-row"><span class="ms-label">Total escrow & prepaids due at closing</span><span class="ms-val">${fmtD(totalEscrow)}</span></div>`;
+
+  // Bottom two-column
+  const insRenMo=(cm+12)%12,insRenYr=cy+Math.floor((cm+12)/12);
+  ms+=`<div class="ms-bottom">
+    <div class="ms-bottom-col">
+      <div class="ms-bottom-title">Settlement details</div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Closing date</span><span class="ms-bottom-val">${MONTHS[cm]} ${cd}, ${cy}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">First mortgage payment</span><span class="ms-bottom-val">${MONTHS[firstPayMonth]} 1, ${firstPayYear}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Tax cycle</span><span class="ms-bottom-val">${loc.label}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Target disbursement</span><span class="ms-bottom-val">${MS[targetDue.month]} ${targetDue.day}, ${targetDue.year}</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Insurance renewal</span><span class="ms-bottom-val">${MS[insRenMo]} ${cd}, ${insRenYr}</span></div>
+      <div class="ms-bottom-row" style="${sixtyDayTrigger?'color:#7a5800;':''}"><span class="ms-bottom-label">60-day rule</span><span class="ms-bottom-val" style="${sixtyDayTrigger?'color:#7a5800;':''}">${sixtyDayTrigger?'TRIGGERED — '+MS[nextDue.month]+' '+nextDue.day:'Not triggered'}</span></div>
+      ${isPrepaid?`<div class="ms-bottom-row" style="color:#0F6E56;"><span class="ms-bottom-label">MD seller proration</span><span class="ms-bottom-val" style="color:#0F6E56;">${fmtD(mdProreAmount)} (always due)</span></div>`:''}
+    </div>
+    <div class="ms-bottom-col">
+      <div class="ms-bottom-title">Escrow formula (end-in-mind)</div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Billing period</span><span class="ms-bottom-val">${billingMonths} months</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Target at disbursement</span><span class="ms-bottom-val">${TARGET} months (${billingMonths} + ${CUSHION} cushion)</span></div>
+      <div class="ms-bottom-row"><span class="ms-bottom-label">Collected via mortgage pmts</span><span class="ms-bottom-val">${mortgagePayments} months</span></div>
+      <div class="ms-bottom-row hl"><span class="ms-bottom-label">Tax escrow at closing</span><span class="ms-bottom-val">${taxEscrowMonths} months = ${fmtD(taxEscrowAtClosing)}</span></div>
+      ${isPrepaid?`<div class="ms-bottom-row" style="color:#0F6E56;padding-top:4px;"><span class="ms-bottom-label">+ MD seller proration</span><span class="ms-bottom-val" style="color:#0F6E56;">${fmtD(mdProreAmount)}</span></div>`:''}
+      ${sixtyDayTrigger?`<div class="ms-bottom-row triggered"><span class="ms-bottom-label">+ 60-day prepaid tax</span><span class="ms-bottom-val">${fmtD(sixtyDayBillAmount)}</span></div>`:''}
+    </div>
+  </div>`;
+  el('msWrap').innerHTML=ms;
+
+  // ── TIMELINE ──────────────────────────────────────────────────────────────
+  const tlItems=[
+    {color:'#185FA5',title:`Closing — ${MONTHS[cm]} ${cd}, ${cy}`,
+     sub:`${prepaidDays} prepaid interest days (${fmtD(dailyInt)}/day = ${fmtD(prepaidInt)}).${isPrepaid?' MD seller proration: '+mdProreDays+' days to '+mdProreEndDate+' = '+fmtD(mdProreAmount)+'.':''}${sixtyDayTrigger?' 60-day rule triggered.':''}`},
+    {color:'#1D9E75',title:`First payment — ${MONTHS[firstPayMonth]} 1, ${firstPayYear}`,
+     sub:`Escrow begins: ${fmtD(moTax)}/mo tax + ${fmtD(moIns)}/mo insurance.`},
+  ];
+  if(sixtyDayTrigger){
+    tlItems.push({color:'#EF9F27',
+      title:`60-day trigger — ${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year} (${nextDue.days} days away)`,
+      sub:isPrepaid?`${billingMonths}-month bill (${fmtD(sixtyDayBillAmount)}) added to Prepaids. Escrow resets to ${MS[targetDue.month]} ${targetDue.year}.`:`Prorated ${nextDue.days} days (${fmtD(sixtyDayBillAmount)}) in Prepaids. Escrow resets to ${MS[targetDue.month]} ${targetDue.year}.`});
+  }
+  tlItems.push({color:'#378ADD',
+    title:`Target disbursement — ${MS[targetDue.month]} ${targetDue.day}, ${targetDue.year}`,
+    sub:`Need ${TARGET} months (${billingMonths} bill + ${CUSHION} cushion). ${mortgagePayments} via mortgage → ${taxEscrowMonths} months at closing.`});
+  tlItems.push({color:'#7F77DD',
+    title:`Insurance renewal — ${MS[insRenMo]} ${cd}, ${insRenYr}`,
+    sub:`${CUSHION} month cushion (${fmtD(insEscrow)}) + 1yr prepaid (${fmtD(prepaidIns)}).`});
+  el('timeline').innerHTML=tlItems.map((item,i)=>`
+    <div class="tl-row">
+      <div class="tl-left"><div class="tl-circle" style="background:${item.color};"></div>${i<tlItems.length-1?'<div class="tl-line"></div>':''}</div>
+      <div class="tl-body"><div class="tl-title">${item.title}</div><div class="tl-sub">${item.sub}</div></div>
+    </div>`).join('');
+
+  // ── ESCROW DETAIL PANEL ───────────────────────────────────────────────────
+  let ed=`<div class="ts-header">Escrow & prepaid — ${state}${countyName?' / '+countyName:''} | ${loc.label}</div>`;
+  ed+=`<div class="ts-row sh"><span>Prepaids — always at closing</span></div>`;
+  ed+=`<div class="ts-row prorate-row"><span class="ts-label">Prepaid interest (${prepaidDays} days)<span class="pill prepaid">APR</span></span><span class="ts-val green">${fmtD(prepaidInt)}</span></div>`;
+  ed+=`<div class="ts-row prorate-row"><span class="ts-label">1 year insurance prepaid</span><span class="ts-val green">${fmtD(prepaidIns)}</span></div>`;
+  if(isPrepaid){
+    ed+=`<div class="ts-row sh"><span>MD seller proration — always collected</span></div>`;
+    ed+=`<div class="ts-row prorate-row"><span class="ts-label">Closing (${MS[cm]} ${cd}) → seller's period end (${mdProreEndDate})<span class="pill prorate">buyer owes seller</span></span><span class="ts-val green">&nbsp;</span></div>`;
+    ed+=`<div class="ts-row prorate-row"><span class="ts-label">Days: ${mdProreDays} days = ${mdProreMonths.toFixed(2)} months</span><span class="ts-val green">&nbsp;</span></div>`;
+    ed+=`<div class="ts-row prorate-row"><span class="ts-label">Daily tax rate</span><span class="ts-val">${fmtD(dailyTax)}/day</span></div>`;
+    ed+=`<div class="ts-row tot"><span class="ts-label">MD seller proration (${mdProreDays} days × ${fmtD(dailyTax)})</span><span class="ts-val green">${fmtD(mdProreAmount)}</span></div>`;
+  }
+  if(sixtyDayTrigger){
+    ed+=`<div class="ts-row sh"><span>60-day rule — additional prepaid tax</span></div>`;
+    if(isPrepaid){
+      ed+=`<div class="ts-row amber-row"><span class="ts-label">${billingMonths}-month semi-annual bill (${MS[nextDue.month]} ${nextDue.day})<span class="pill trigger">60-day rule</span></span><span class="ts-val amber">${fmtD(sixtyDayBillAmount)}</span></div>`;
+    } else {
+      ed+=`<div class="ts-row amber-row"><span class="ts-label">Prorated ${nextDue.days} days to ${MS[nextDue.month]} ${nextDue.day}<span class="pill trigger">60-day rule</span></span><span class="ts-val amber">${fmtD(sixtyDayBillAmount)}</span></div>`;
+    }
+  }
+  ed+=`<div class="ts-row sh"><span>Tax escrow — end-in-mind (targeting ${MS[targetDue.month]} ${targetDue.day}, ${targetDue.year})</span></div>`;
+  ed+=`<div class="ts-row"><span class="ts-label">Target: ${TARGET} months | Mortgage pmts: ${mortgagePayments}</span><span class="ts-val"><span class="mo-badge">${mortgageMonths.slice(0,3).join(', ')}${mortgageMonths.length>3?' +'+String(mortgageMonths.length-3)+' more':''}</span></span></div>`;
+  ed+=`<div class="ts-row tot"><span class="ts-label">Tax escrow: ${TARGET} − ${mortgagePayments} = ${taxEscrowMonths} months × ${fmtD(moTax)}</span><span class="ts-val blue">${fmtD(taxEscrowAtClosing)}</span></div>`;
+  ed+=`<div class="ts-row sh"><span>Insurance escrow</span></div>`;
+  ed+=`<div class="ts-row escrow-row"><span class="ts-label">Insurance escrow (${CUSHION} months × ${fmtD(moIns)})<span class="pill escrow">2 months</span></span><span class="ts-val">${fmtD(insEscrow)}</span></div>`;
+  ed+=`<div class="ts-row sh"><span>PMI</span></div>`;
+  ed+=`<div class="ts-row"><span class="ts-label">PMI escrow at closing</span><span class="ts-val muted">$0.00 — monthly only</span></div>`;
+  ed+=`<div class="ts-row grand"><span class="ts-label" style="font-weight:500;">Total escrow & prepaids</span><span class="ts-val blue" style="font-size:14px;">${fmtD(totalEscrow)}</span></div>`;
+  el('escrowDetail').innerHTML=ed;
+
+  // ── WORK-BACKWARDS PANEL ─────────────────────────────────────────────────
+  let wb=`<div class="ts-header">Work-backwards — ${MS[targetDue.month]} ${targetDue.day}, ${targetDue.year}</div>`;
+  wb+=`<div class="ts-row sh"><span>Step 1 — target balance at disbursement</span></div>`;
+  wb+=`<div class="ts-row"><span class="ts-label">${billingMonths}-month tax bill (${fmtD(moTax)}/mo × ${billingMonths})</span><span class="ts-val">${fmtD(moTax*billingMonths)}</span></div>`;
+  wb+=`<div class="ts-row"><span class="ts-label">Required cushion (${CUSHION} months × ${fmtD(moTax)})</span><span class="ts-val">${fmtD(moTax*CUSHION)}</span></div>`;
+  wb+=`<div class="ts-row tot"><span class="ts-label">Target at ${MS[targetDue.month]} disbursement</span><span class="ts-val blue">${TARGET} months = ${fmtD(moTax*TARGET)}</span></div>`;
+  wb+=`<div class="ts-row sh"><span>Step 2 — monthly collections via mortgage (${MS[firstPayMonth]} → ${MS[targetDue.month]})</span></div>`;
+  mortgageMonths.forEach(mo=>{wb+=`<div class="ts-row escrow-row"><span class="ts-label">${mo}<span class="pill escrow">+1 month</span></span><span class="ts-val">${fmtD(moTax)}</span></div>`;});
+  wb+=`<div class="ts-row tot"><span class="ts-label">Total via mortgage payments</span><span class="ts-val blue">${mortgagePayments} months = ${fmtD(moTax*mortgagePayments)}</span></div>`;
+  wb+=`<div class="ts-row sh"><span>Step 3 — closing collection needed</span></div>`;
+  wb+=`<div class="ts-row grand"><span class="ts-label" style="font-weight:500;">${TARGET} − ${mortgagePayments} = <strong>${taxEscrowMonths} months at closing</strong></span><span class="ts-val blue" style="font-size:14px;">${fmtD(taxEscrowAtClosing)}</span></div>`;
+  if(isPrepaid){
+    wb+=`<div class="ts-row sh"><span>MD seller proration — always shown (closing → ${mdProreEndDate})</span></div>`;
+    wb+=`<div class="ts-row prorate-row"><span class="ts-label">Days: ${mdProreDays} days | Months: ${mdProreMonths.toFixed(2)}</span><span class="ts-val">&nbsp;</span></div>`;
+    wb+=`<div class="ts-row prorate-row"><span class="ts-label">Calculation: ${mdProreDays} days × ${fmtD(dailyTax)}/day</span><span class="ts-val green">${fmtD(mdProreAmount)}</span></div>`;
+  }
+  if(sixtyDayTrigger){
+    wb+=`<div class="ts-row sh"><span>60-day rule — ${isPrepaid?billingMonths+'-month bill':'prorated days'} (additional prepaid)</span></div>`;
+    wb+=`<div class="ts-row amber-row"><span class="ts-label">${isPrepaid?billingMonths+' months × '+fmtD(moTax)+'/mo':nextDue.days+' days × '+fmtD(dailyTax)+'/day'}</span><span class="ts-val amber">${fmtD(sixtyDayBillAmount)}</span></div>`;
+  }
+  el('workBackDetail').innerHTML=wb;
+
+  // ── CHART ─────────────────────────────────────────────────────────────────
+  updateChart(taxEscrowAtClosing,insEscrow,prepaidInt,prepaidIns,
+    isPrepaid?mdProreAmount:0,
+    sixtyDayTrigger?sixtyDayBillAmount:0);
+
+  el('noteBox').textContent=`${state}${countyName?' / '+countyName:''} | ${loc.label} | ${billingMonths}-month billing | Target: ${TARGET} | Closing: ${MONTHS[cm]} ${cd}, ${cy} | First pmt: ${MONTHS[firstPayMonth]} 1, ${firstPayYear} | Next due: ${MS[nextDue.month]} ${nextDue.day}, ${nextDue.year} (${nextDue.days} days)${isPrepaid?' | MD seller proration: '+mdProreDays+' days = '+fmtD(mdProreAmount)+' (always due at closing)':''}${sixtyDayTrigger?' | 60-DAY RULE TRIGGERED: additional '+fmtD(sixtyDayBillAmount)+' in Prepaids':''} | Tax escrow at closing: ${taxEscrowMonths} months = ${fmtD(taxEscrowAtClosing)}.`;
+}
+
+function updateChart(tax,ins,int,insPrep,mdProrate,sixtyBill){
+  const allData=[Math.round(tax),Math.round(ins),Math.round(int),Math.round(insPrep),Math.round(mdProrate),Math.round(sixtyBill)];
+  const allLabels=['Tax escrow','Ins. escrow','Prepaid interest','Ins. prepaid','MD seller proration','Tax prepaid (60-day)'];
+  const allColors=['#378ADD','#1D9E75','#EF9F27','#7F77DD','#9EE0B4','#D85A30'];
+  const data=[],labels=[],colors=[];
+  allData.forEach((v,i)=>{if(v>0){data.push(v);labels.push(allLabels[i]);colors.push(allColors[i]);}});
+  if(escChart){escChart.data.labels=labels;escChart.data.datasets[0].data=data;escChart.data.datasets[0].backgroundColor=colors;escChart.update();return;}
+  escChart=new Chart(el('escrowChart'),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' $'+ctx.parsed.y.toLocaleString()}}},scales:{x:{ticks:{font:{size:11}},grid:{display:false}},y:{ticks:{callback:v=>'$'+Math.round(v).toLocaleString(),font:{size:11}},grid:{color:'rgba(128,128,128,0.12)'}}}}});
+}
+calc();
+</script>
+
+<div style="background:#fff;border-top:0.5px solid #d3d1c7;padding:10px 1.5rem;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">
+  <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:11px;color:#888780;">Tim Smith &nbsp;&middot;&nbsp; NMLS #195275 &nbsp;&middot;&nbsp; Company NMLS #1701910</span>
+    <span style="font-size:11px;color:#888780;">This is NOT a loan estimate. For estimation purposes only. All tools run in your browser — no data collected.</span>
+  </div>
+</div>
+
+<div style="background:#f5f5f3;border-top:0.5px solid #d3d1c7;padding:14px 1.5rem;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <p style="font-size:10px;color:#888780;line-height:1.7;"><strong style="color:#5F5E5A;">DISCLAIMER:</strong> The Gramm-Leach-Bliley Act requires lenders and other parties in the lending process to safeguard consumers' personal, non-public information. The information in this correspondence, including any attachments, is confidential, privileged, &amp; proprietary, intended only for the use of recipient to whom it is addressed. Any unauthorized review, use, dissemination, copying of this message is strictly prohibited. If you are not the intended addressee in this message, or an agent responsible for delivery of the message to such person, you are hereby notified that you have received this communication in error. Please destroy all copies of the original message from your computer system. Certain views and opinions expressed in this email, and any attachments, may be personal to the sender and not necessarily reflective of the views of Loansteady LLC.</p>
+  </div>
+</div>
+</body>
+</html>

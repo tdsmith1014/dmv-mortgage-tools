@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>B&E Foods — Wells Fargo Swap Analysis v3</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; padding: 2rem; }
+h1 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+.sub { font-size: 13px; color: #888780; margin-bottom: 1.5rem; }
+.card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+.sec-label { font-size: 13px; color: #888780; margin-bottom: 8px; font-weight: 500; }
+.tab-row { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+.tab-btn { font-size: 13px; padding: 6px 16px; border-radius: 8px; border: 0.5px solid #b4b2a9; background: transparent; color: #888780; cursor: pointer; }
+.tab-btn.active { background: #E6F1FB; color: #185FA5; border-color: transparent; font-weight: 500; }
+.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 1.5rem; }
+.ctrl { display: flex; flex-direction: column; gap: 5px; }
+.ctrl label { font-size: 12px; color: #888780; }
+.ctrl-val { font-size: 14px; font-weight: 500; color: #1a1a18; }
+input[type=range] { width: 100%; accent-color: #378ADD; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.mc { background: #eeede8; border-radius: 8px; padding: 12px 14px; }
+.mc-label { font-size: 11px; color: #888780; margin-bottom: 3px; }
+.mc-val { font-size: 19px; font-weight: 500; color: #1a1a18; }
+.mc-sub { font-size: 11px; color: #b4b2a9; margin-top: 2px; }
+.chart-wrap { position: relative; width: 100%; height: 270px; margin-bottom: 1.5rem; }
+.legend { display: flex; gap: 14px; margin-bottom: 8px; font-size: 12px; color: #888780; flex-wrap: wrap; }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.ldot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.sc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.sc { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 13px; }
+.sc.hl { border: 2px solid #185FA5; }
+.sc-title { font-size: 12px; font-weight: 500; color: #1a1a18; margin-bottom: 5px; }
+.sc-rate { font-size: 20px; font-weight: 500; margin-bottom: 3px; }
+.sc-row { font-size: 11px; color: #888780; margin-top: 2px; }
+.badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 8px; background: #E6F1FB; color: #185FA5; margin-bottom: 5px; }
+.hr { border: none; border-top: 0.5px solid #d3d1c7; margin: 1.25rem 0; }
+.note { font-size: 12px; color: #888780; line-height: 1.6; padding: 10px 14px; background: #eeede8; border-radius: 8px; margin-bottom: 1rem; }
+.amort-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 1.5rem; }
+.amort-table th { font-size: 11px; font-weight: 500; color: #888780; text-align: right; padding: 6px 10px; border-bottom: 0.5px solid #d3d1c7; }
+.amort-table th:first-child { text-align: left; }
+.amort-table td { padding: 7px 10px; text-align: right; border-bottom: 0.5px solid #d3d1c7; color: #1a1a18; }
+.amort-table td:first-child { text-align: left; color: #888780; }
+.amort-table tr.total td { font-weight: 500; background: #eeede8; }
+.amort-table .save-pos { color: #0F6E56; font-weight: 500; }
+.amort-table .save-neg { color: #993C1D; font-weight: 500; }
+.view { display: none; }
+.view.active { display: block; }
+@media (max-width: 640px) {
+  .controls { grid-template-columns: 1fr 1fr; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .sc-grid { grid-template-columns: 1fr; }
+  .amort-table { font-size: 11px; }
+  .amort-table th, .amort-table td { padding: 5px 6px; }
+}
+</style>
+</head>
+<body><nav style="background:#fff;border-bottom:0.5px solid #d3d1c7;padding:0 1.5rem;position:sticky;top:0;z-index:100;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;"><div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:52px;"><a href="index.html" style="font-size:14px;font-weight:600;color:#185FA5;text-decoration:none;display:flex;align-items:center;gap:8px;"><span style="width:26px;height:26px;background:#185FA5;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M3 9.5L12 3l9 6.5V21H3V9.5z"/></svg></span>DMV Mortgage Tools</a><div style="display:flex;gap:4px;"><a href="index.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Home</a><a href="mortgage-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Mortgage</a><a href="escrow-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Escrow</a><a href="closing-cost-calculator.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Closing Costs</a><a href="swap-analysis.html" style="font-size:12px;color:#888780;text-decoration:none;padding:5px 11px;border-radius:6px;">Swap Analysis</a></div></div></nav>
+<div class="card">
+  <h1>B&E Foods — Wells Fargo Swap Analysis</h1>
+  <p class="sub">$12.5M Revolving Credit Facility · SOFR + 1.95% · Interest Rate Swap + Unused Fee Model · 3-Year View</p>
+
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchView('scenario', this)">Scenario view</button>
+    <button class="tab-btn" onclick="switchView('amort', this)">3-year amortization</button>
+  </div>
+
+  <p class="sec-label">Facility parameters</p>
+  <div class="controls">
+    <div class="ctrl">
+      <label>Facility size</label>
+      <input type="range" min="5000000" max="12500000" step="500000" value="12500000" id="facilitySize" oninput="update()">
+      <span class="ctrl-val" id="facilityOut">$12.5M</span>
+    </div>
+    <div class="ctrl">
+      <label>Current SOFR</label>
+      <input type="range" min="2.0" max="6.5" step="0.01" value="3.63" id="sofrRate" oninput="update()">
+      <span class="ctrl-val" id="sofrOut">3.63%</span>
+    </div>
+    <div class="ctrl">
+      <label>Swap fixed rate (est.)</label>
+      <input type="range" min="4.0" max="8.0" step="0.01" value="6.75" id="swapRate" oninput="update()">
+      <span class="ctrl-val" id="swapOut">6.75%</span>
+    </div>
+    <div class="ctrl">
+      <label>Unused fee (% of undrawn)</label>
+      <input type="range" min="0.05" max="0.50" step="0.01" value="0.10" id="unusedFee" oninput="update()">
+      <span class="ctrl-val" id="unusedOut">0.10%</span>
+    </div>
+    <div class="ctrl">
+      <label>Avg utilization %</label>
+      <input type="range" min="10" max="100" step="1" value="100" id="utilPct" oninput="update()">
+      <span class="ctrl-val" id="utilOut">100%</span>
+    </div>
+    <div class="ctrl">
+      <label>SOFR yr 2 / yr 3 (amort)</label>
+      <input type="range" min="2.0" max="6.5" step="0.01" value="3.63" id="sofrFwd" oninput="update()">
+      <span class="ctrl-val" id="sofrFwdOut">3.63%</span>
+    </div>
+  </div>
+
+  <p class="sec-label">All-in cost summary (annual)</p>
+  <div class="metric-grid">
+    <div class="mc">
+      <div class="mc-label">Floating all-in rate</div>
+      <div class="mc-val" id="m-floatRate">5.58%</div>
+      <div class="mc-sub">SOFR + spread</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">True floating cost</div>
+      <div class="mc-val" id="m-floatCost">$698K</div>
+      <div class="mc-sub">Interest + unused fee</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Swapped all-in rate</div>
+      <div class="mc-val" id="m-swapRate">6.75%</div>
+      <div class="mc-sub">Fixed + unused fee</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">True swapped cost</div>
+      <div class="mc-val" id="m-swapCost">$844K</div>
+      <div class="mc-sub">Interest + unused fee</div>
+    </div>
+  </div>
+
+  <div class="view active" id="view-scenario">
+    <p class="sec-label">Annual cost by SOFR scenario</p>
+    <div class="legend">
+      <span><span class="ldot" style="background:#378ADD;"></span>Floating (interest + unused fee)</span>
+      <span><span class="ldot" style="background:#1D9E75;"></span>Swapped fixed (interest + unused fee)</span>
+      <span><span class="ldot" style="background:#EF9F27;"></span>Unused fee drag only</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart1"></canvas></div>
+    <p class="sec-label">Scenario breakdown</p>
+    <div class="sc-grid" id="scCards"></div>
+    <hr class="hr">
+    <div class="note" id="noteBox"></div>
+  </div>
+
+  <div class="view" id="view-amort">
+    <p class="sec-label">3-year cumulative cost — floating vs. swapped</p>
+    <div class="legend">
+      <span><span class="ldot" style="background:#378ADD;"></span>Floating cumulative</span>
+      <span><span class="ldot" style="background:#1D9E75;"></span>Swapped cumulative</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart2"></canvas></div>
+    <p class="sec-label" style="margin-top:1rem;">Year-by-year detail</p>
+    <table class="amort-table" id="amortTable"></table>
+    <hr class="hr">
+    <div class="note" id="amortNote"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const spread = 1.95;
+const sofrScenarios = [2.5, 3.0, 3.5, 3.63, 4.0, 4.5, 5.0, 5.5, 6.0];
+let chart1, chart2;
+
+function fmtK(n) { return '$' + Math.round(n/1000).toLocaleString() + 'K'; }
+function fmtPct(n) { return parseFloat(n).toFixed(2) + '%'; }
+function gv(id) { return parseFloat(document.getElementById(id).value); }
+
+function costs(sofrVal, facility, util, unusedFee, swapFixed) {
+  const drawn = facility * util / 100;
+  const undrawn = facility - drawn;
+  const floatInterest = drawn * (sofrVal + spread) / 100;
+  const swapInterest = drawn * swapFixed / 100;
+  const unusedCost = undrawn * unusedFee / 100;
+  return { floatTotal: floatInterest + unusedCost, swapTotal: swapInterest + unusedCost, floatInterest, swapInterest, unusedCost };
+}
+
+function update() {
+  const facility = gv('facilitySize');
+  const sofr = parseFloat(gv('sofrRate').toFixed(2));
+  const swapFixed = parseFloat(gv('swapRate').toFixed(2));
+  const unusedFee = parseFloat(gv('unusedFee').toFixed(2));
+  const util = gv('utilPct');
+  const sofrFwd = parseFloat(gv('sofrFwd').toFixed(2));
+
+  document.getElementById('facilityOut').textContent = '$' + (facility/1000000).toFixed(1) + 'M';
+  document.getElementById('sofrOut').textContent = fmtPct(sofr);
+  document.getElementById('swapOut').textContent = fmtPct(swapFixed);
+  document.getElementById('unusedOut').textContent = fmtPct(unusedFee);
+  document.getElementById('utilOut').textContent = Math.round(util) + '%';
+  document.getElementById('sofrFwdOut').textContent = fmtPct(sofrFwd);
+
+  const cur = costs(sofr, facility, util, unusedFee, swapFixed);
+  document.getElementById('m-floatRate').textContent = fmtPct(sofr + spread);
+  document.getElementById('m-floatCost').textContent = fmtK(cur.floatTotal);
+  document.getElementById('m-swapRate').textContent = fmtPct(swapFixed);
+  document.getElementById('m-swapCost').textContent = fmtK(cur.swapTotal);
+
+  const floatData = sofrScenarios.map(s => Math.round(costs(s, facility, util, unusedFee, swapFixed).floatTotal));
+  const swapData = sofrScenarios.map(s => Math.round(costs(s, facility, util, unusedFee, swapFixed).swapTotal));
+  const unusedData = sofrScenarios.map(s => Math.round(costs(s, facility, util, unusedFee, swapFixed).unusedCost));
+  const labels = sofrScenarios.map(s => fmtPct(s));
+
+  if (chart1) {
+    chart1.data.labels = labels;
+    chart1.data.datasets[0].data = floatData;
+    chart1.data.datasets[1].data = swapData;
+    chart1.data.datasets[2].data = unusedData;
+    chart1.update();
+  }
+
+  const scenarioDefs = [
+    { label: 'SOFR drops to 2.5%', sofrVal: 2.5 },
+    { label: 'SOFR at ' + fmtPct(sofr) + ' (current)', sofrVal: sofr, hl: true },
+    { label: 'SOFR rises to 6.0%', sofrVal: 6.0 }
+  ];
+  document.getElementById('scCards').innerHTML = scenarioDefs.map(sc => {
+    const c = costs(sc.sofrVal, facility, util, unusedFee, swapFixed);
+    const diff = c.swapTotal - c.floatTotal;
+    const swapWins = diff < 0;
+    return `<div class="sc ${sc.hl ? 'hl' : ''}">
+      ${sc.hl ? '<div class="badge">Current</div><br>' : ''}
+      <div class="sc-title">${sc.label}</div>
+      <div class="sc-rate" style="color:${swapWins ? '#0F6E56' : '#993C1D'};">${fmtPct(sc.sofrVal + spread)} float</div>
+      <div class="sc-row">Float total: ${fmtK(c.floatTotal)}/yr</div>
+      <div class="sc-row">Swap total: ${fmtK(c.swapTotal)}/yr</div>
+      <div class="sc-row">Unused fee: ${fmtK(c.unusedCost)}/yr</div>
+      <div class="sc-row" style="margin-top:5px; font-weight:500; color:${swapWins ? '#0F6E56' : '#993C1D'};">
+        ${swapWins ? 'Swap saves ' + fmtK(Math.abs(diff)) + '/yr' : 'Float saves ' + fmtK(Math.abs(diff)) + '/yr'}
+      </div>
+    </div>`;
+  }).join('');
+
+  const saving = cur.floatTotal - cur.swapTotal;
+  const breakeven = swapFixed - spread;
+  document.getElementById('noteBox').textContent = saving > 0
+    ? `At ${fmtPct(sofr)} SOFR and ${Math.round(util)}% utilization, the swap saves ${fmtK(saving)}/yr all-in including the unused fee drag of ${fmtK(cur.unusedCost)}/yr on undrawn capacity.`
+    : `At ${fmtPct(sofr)} SOFR, floating is cheaper by ${fmtK(Math.abs(saving))}/yr. The unused fee drag is ${fmtK(cur.unusedCost)}/yr. The swap breaks even when SOFR exceeds ${fmtPct(breakeven)}. Try lowering utilization to see how unused fee drag affects the true cost.`;
+
+  const years = [
+    { label: 'Year 1', sofrUsed: sofr, c: costs(sofr, facility, util, unusedFee, swapFixed) },
+    { label: 'Year 2', sofrUsed: sofrFwd, c: costs(sofrFwd, facility, util, unusedFee, swapFixed) },
+    { label: 'Year 3', sofrUsed: sofrFwd, c: costs(sofrFwd, facility, util, unusedFee, swapFixed) }
+  ];
+  const totFloat = years.reduce((a, y) => a + y.c.floatTotal, 0);
+  const totSwap = years.reduce((a, y) => a + y.c.swapTotal, 0);
+  const totUnused = years.reduce((a, y) => a + y.c.unusedCost, 0);
+  const totSave = totFloat - totSwap;
+
+  let cf = 0, cs = 0;
+  const cumFloat = [], cumSwap = [];
+  years.forEach(y => { cf += y.c.floatTotal; cs += y.c.swapTotal; cumFloat.push(Math.round(cf)); cumSwap.push(Math.round(cs)); });
+
+  if (chart2) {
+    chart2.data.datasets[0].data = cumFloat;
+    chart2.data.datasets[1].data = cumSwap;
+    chart2.update();
+  }
+
+  const rows = years.map(y => {
+    const diff = y.c.swapTotal - y.c.floatTotal;
+    const swapW = diff < 0;
+    return `<tr>
+      <td>${y.label} (SOFR ${fmtPct(y.sofrUsed)})</td>
+      <td>${fmtK(y.c.floatInterest)}</td>
+      <td>${fmtK(y.c.swapInterest)}</td>
+      <td>${fmtK(y.c.unusedCost)}</td>
+      <td>${fmtK(y.c.floatTotal)}</td>
+      <td>${fmtK(y.c.swapTotal)}</td>
+      <td class="${swapW ? 'save-pos' : 'save-neg'}">${swapW ? '-' : '+'}${fmtK(Math.abs(diff))}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('amortTable').innerHTML = `
+    <thead><tr>
+      <th style="text-align:left">Period</th>
+      <th>Float interest</th><th>Swap interest</th><th>Unused fee</th>
+      <th>Float total</th><th>Swap total</th><th>Difference</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr class="total">
+      <td>3-year total</td>
+      <td>${fmtK(years.reduce((a,y)=>a+y.c.floatInterest,0))}</td>
+      <td>${fmtK(years.reduce((a,y)=>a+y.c.swapInterest,0))}</td>
+      <td>${fmtK(totUnused)}</td>
+      <td>${fmtK(totFloat)}</td>
+      <td>${fmtK(totSwap)}</td>
+      <td class="${totSave > 0 ? 'save-neg' : 'save-pos'}">${totSave > 0 ? 'Float saves ' : 'Swap saves '}${fmtK(Math.abs(totSave))}</td>
+    </tr></tfoot>`;
+
+  document.getElementById('amortNote').textContent = totSave > 0
+    ? `Over 3 years floating saves ${fmtK(totSave)} vs. locking in a swap at ${fmtPct(swapFixed)}. Unused fee drag totals ${fmtK(totUnused)} across the period. Adjust the "SOFR yr 2/yr 3" slider to stress-test a rate increase scenario.`
+    : `Over 3 years the swap saves ${fmtK(Math.abs(totSave))} vs. floating, after accounting for ${fmtK(totUnused)} in unused fee drag. The forward SOFR assumption drives this — adjust the yr 2/3 slider to see how sensitive the conclusion is to rate movements.`;
+}
+
+function initCharts() {
+  chart1 = new Chart(document.getElementById('chart1'), {
+    type: 'bar',
+    data: {
+      labels: sofrScenarios.map(s => fmtPct(s)),
+      datasets: [
+        { label: 'Floating', data: [], backgroundColor: '#378ADD', borderRadius: 3 },
+        { label: 'Swapped', data: [], backgroundColor: '#1D9E75', borderRadius: 3 },
+        { label: 'Unused fee', data: [], backgroundColor: '#EF9F27', borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { autoSkip: false, maxRotation: 35, font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { callback: v => '$' + Math.round(v/1000) + 'K', font: { size: 11 } }, grid: { color: 'rgba(128,128,128,0.12)' } }
+      }
+    }
+  });
+
+  chart2 = new Chart(document.getElementById('chart2'), {
+    type: 'line',
+    data: {
+      labels: ['Year 1', 'Year 2', 'Year 3'],
+      datasets: [
+        { label: 'Float cumulative', data: [], borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.08)', fill: true, tension: 0.3, pointRadius: 5 },
+        { label: 'Swap cumulative', data: [], borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.08)', fill: true, tension: 0.3, pointRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+        y: { ticks: { callback: v => '$' + Math.round(v/1000) + 'K', font: { size: 11 } }, grid: { color: 'rgba(128,128,128,0.12)' } }
+      }
+    }
+  });
+}
+
+function switchView(v, btn) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  btn.classList.add('active');
+  if (v === 'amort') { setTimeout(() => { chart2 && chart2.resize(); }, 50); }
+}
+
+initCharts();
+update();
+</script>
+
+<div style="background:#fff;border-top:0.5px solid #d3d1c7;padding:10px 1.5rem;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">
+  <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:11px;color:#888780;">Tim Smith &nbsp;&middot;&nbsp; NMLS #195275 &nbsp;&middot;&nbsp; Company NMLS #1701910</span>
+    <span style="font-size:11px;color:#888780;">This is NOT a loan estimate. For estimation purposes only. All tools run in your browser — no data collected.</span>
+  </div>
+</div>
+
+<div style="background:#f5f5f3;border-top:0.5px solid #d3d1c7;padding:14px 1.5rem;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <p style="font-size:10px;color:#888780;line-height:1.7;"><strong style="color:#5F5E5A;">DISCLAIMER:</strong> The Gramm-Leach-Bliley Act requires lenders and other parties in the lending process to safeguard consumers' personal, non-public information. The information in this correspondence, including any attachments, is confidential, privileged, &amp; proprietary, intended only for the use of recipient to whom it is addressed. Any unauthorized review, use, dissemination, copying of this message is strictly prohibited. If you are not the intended addressee in this message, or an agent responsible for delivery of the message to such person, you are hereby notified that you have received this communication in error. Please destroy all copies of the original message from your computer system. Certain views and opinions expressed in this email, and any attachments, may be personal to the sender and not necessarily reflective of the views of Loansteady LLC.</p>
+  </div>
+</div>
+</body>
+</html>
